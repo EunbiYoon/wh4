@@ -6,14 +6,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.pipeline import Pipeline
 
-# ===== 활성화 함수 =====
+# ===== Activation functions =====
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
 def sigmoid_gradient(z):
     return sigmoid(z) * (1 - sigmoid(z))
 
-# ===== 신경망 클래스 =====
+# ===== Neural Network Class =====
 class NeuralNetwork:
     def __init__(self, layer_sizes, alpha=0.01, lam=0.0):
         self.layer_sizes = layer_sizes
@@ -24,7 +24,7 @@ class NeuralNetwork:
     def initialize_weights(self):
         weights = []
         for i in range(len(self.layer_sizes) - 1):
-            l_in = self.layer_sizes[i] + 1  # +1 for bias
+            l_in = self.layer_sizes[i] + 1  # +1 for bias term
             l_out = self.layer_sizes[i + 1]
             weight = np.random.randn(l_out, l_in) * np.sqrt(2 / l_in)
             weights.append(weight)
@@ -94,7 +94,7 @@ class NeuralNetwork:
         A, _ = self.forward_propagation(X)
         return A[-1]
 
-# ===== One-Hot Encoding 함수 =====
+# ===== One-Hot Encoding Function =====
 def one_hot_encode_data(df, target_column):
     X = df.drop(columns=[target_column])
     y = df[target_column].values.reshape(-1, 1)
@@ -105,24 +105,24 @@ def one_hot_encode_data(df, target_column):
     preprocessor = ColumnTransformer(
         transformers=[
             ('num', StandardScaler(), numerical_cols),
-            ('cat', OneHotEncoder(sparse=False, handle_unknown='ignore'), categorical_cols)
+            ('cat', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), categorical_cols)
         ]
     )
 
     X_transformed = preprocessor.fit_transform(X)
     return X_transformed, y
 
-# ===== 데이터셋 로딩 =====
+
 def load_wdbc_dataset(path):
     df = pd.read_csv(path)
 
-    # ✅ 'label' 컬럼이 정답 (Malignant/Benign)
-    y = (df['label'] == 'M').astype(int).values.reshape(-1, 1)  # Malignant=1, Benign=0
+    # 'label' column is the target (Malignant/Benign)
+    y = (df['label'] == 'M').astype(int).values.reshape(-1, 1)
 
-    # ✅ 'id', 'label' 컬럼 제거하고 feature만 남기기
+    # Drop 'label' column and keep only feature columns
     X = df.drop(columns=['label']).values
 
-    # ✅ 정규화 (StandardScaler)
+    # Standardize the features
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
 
@@ -134,7 +134,7 @@ def load_loan_dataset(path):
     X_encoded, y = one_hot_encode_data(df, target_column='label')
     return X_encoded, y
 
-# ===== Stratified K-Fold Cross Validation =====
+# ===== Stratified K-Fold Cross Validation Evaluation =====
 def evaluate_model(X, y, hidden_layers, alpha=0.01, lam=0.0, epochs=100, k=5):
     skf = StratifiedKFold(n_splits=k, shuffle=True, random_state=42)
     accuracies = []
@@ -162,16 +162,16 @@ def evaluate_model(X, y, hidden_layers, alpha=0.01, lam=0.0, epochs=100, k=5):
 
     return np.mean(accuracies), np.mean(f1_scores)
 
-# ===== 실행 예시 =====
+# ===== Main Execution Example =====
 if __name__ == "__main__":
-    # WDBC 데이터
+    # Load WDBC dataset
     X_wdbc, y_wdbc = load_wdbc_dataset("wdbc.csv")
 
-    # Loan 데이터
+    # Load Loan dataset
     X_loan, y_loan = load_loan_dataset("loan.csv")
 
-    # 모델 설정
-    hidden_layers = [10, 5]  # 두 hidden layer: 10 neurons -> 5 neurons
+    # Model Configuration
+    hidden_layers = [4, 4, 4]  # Three hidden layers: 4 neurons each
     alpha = 0.1
     lam = 0.01
     epochs = 100
