@@ -110,7 +110,7 @@ def regularized_gradient_theta(D_list, Theta, lambda_reg):
     Theta = Theta          # Theta는 원래 순서대로 (Theta1부터 Theta3)
 
     for i in range(len(D_list)):
-        Theta_idx = i + 1  # 🔥 Theta1, Theta2, Theta3 이런 식으로 번호 증가
+        Theta_idx = i+1  # 🔥 Theta1, Theta2, Theta3 이런 식으로 번호 증가
         D_list[i][:,1:] += (lambda_reg / len(D_list)) * Theta[i][:,1:]
 
         print(f"\n\tFinal regularized gradients of Theta{Theta_idx}:")
@@ -128,6 +128,8 @@ def main(Theta, X, y, lambda_reg):
 
     all_a_lists = forward_propagation(Theta, X)
 
+    accumulated_D_lists = None
+
     for i, a_list in enumerate(all_a_lists):
         print(f"=== Training instance {i+1} ===")
 
@@ -140,25 +142,30 @@ def main(Theta, X, y, lambda_reg):
         # ✅ gradient 계산
         D_list = gradient_theta(delta_list, a_list)
 
-        # ✅ gradient 출력 (Theta 번호를 제일 높은 숫자부터)
-        theta_number = len(Theta)  # 예: Theta4부터 시작
-        for grad in D_list:
-            print(f"\tGradient for Theta{theta_number}:")
-            print(grad, "\n")
-            theta_number -= 1  # 번호 하나씩 줄이기
-        
-        # Final regularized gradients
-        finalized_D=regularized_gradient_theta(D_list, Theta, lambda_reg)
+        if accumulated_D_lists is None:
+            accumulated_D_lists = D_list
+        else:
+            for j in range(len(D_list)):
+                accumulated_D_lists[j] += D_list[j]  # 누적 합산
+
+    # === 모든 인스턴스 끝난 뒤 ===
+    # ✅ 평균 내기
+    for j in range(len(accumulated_D_lists)):
+        accumulated_D_lists[j] /= len(all_a_lists)
+
+    # ✅ Final regularized gradients
+    finalized_D = regularized_gradient_theta(accumulated_D_lists, Theta, lambda_reg)
+
 
 if __name__ == "__main__":
     ########## Example 1
-    lambda_reg = 0
-    Theta = [
-        [[0.4, 0.1], [0.3, 0.2]], 
-        [[0.7, 0.5, 0.6]]
-    ]
-    X = [0.13, 0.42]
-    y = [0.9, 0.23]
+    # lambda_reg = 0
+    # Theta = [
+    #     [[0.4, 0.1], [0.3, 0.2]], 
+    #     [[0.7, 0.5, 0.6]]
+    # ]
+    # X = [0.13, 0.42]
+    # y = [0.9, 0.23]
 
 
     ######### Example 2
