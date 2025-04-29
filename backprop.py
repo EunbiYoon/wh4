@@ -105,11 +105,8 @@ def regularized_gradient_theta(D_list, Theta, lambda_reg, m):
 
     return D_list
 
-# ========== Main ==========
-def main(Theta, X, y, lambda_reg):
-    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
-    all_a_lists = forward_propagation(Theta, X)
+def backpropagation(Theta, all_a_lists, y, lambda_reg):
     m = len(all_a_lists)  # 🔥 학습 데이터 개수 (2개)
 
     accumulated_D_lists = None
@@ -138,6 +135,17 @@ def main(Theta, X, y, lambda_reg):
 
     # ✅ Final regularized gradients 출력
     finalized_D = regularized_gradient_theta(accumulated_D_lists, Theta, lambda_reg, m)
+    return finalized_D
+
+# ========== Main ==========
+def main(Theta, X, y, lambda_reg):
+    # print out with 5 floating point
+    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
+
+    # forward and backward propagation 
+    all_a_lists = forward_propagation(Theta, X)
+    finalized_D = backpropagation(Theta, all_a_lists, y, lambda_reg)
+
 
 # ========== Entry Point ==========
 if __name__ == "__main__":
@@ -147,13 +155,11 @@ if __name__ == "__main__":
     #     [[0.4, 0.1], [0.3, 0.2]],
     #     [[0.7, 0.5, 0.6]]
     # ]
-    # two instance, 1 input
     # X = [[0.13], [0.42]]
     # y = [[0.9], [0.23]]
 
     ########## Example 2
     lambda_reg = 0.250
-    # two instance, 2 input
     X = [
         [0.32000, 0.68000],
         [0.83000, 0.02000]
