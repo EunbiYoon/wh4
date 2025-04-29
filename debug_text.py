@@ -1,7 +1,7 @@
 import numpy as np
 import sys
 
-def debug_text(lambda_reg, Theta, X, y, all_activations, all_deltas, all_grads, final_cost, final_grads):
+def main(lambda_reg, Theta, X, y, all_activations, all_deltas, all_grads, final_cost, final_grads):
     with open("back_prop_example.txt", "w") as f:
         # Header
         f.write(f"Regularization parameter lambda={lambda_reg:.3f}\n\n")

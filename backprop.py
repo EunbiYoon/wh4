@@ -1,4 +1,5 @@
 import numpy as np
+import debug_text
 
 # ========== Forward Propagation Functions ==========
 def add_bias(x):
@@ -145,6 +146,8 @@ def main(Theta, X, y, lambda_reg):
     # forward and backward propagation 
     all_a_lists = forward_propagation(Theta, X)
     finalized_D = backpropagation(Theta, all_a_lists, y, lambda_reg)
+
+    debug_text.main(lambda_reg, Theta, X, y, all_activations, all_deltas, all_grads, final_cost, final_grads)
 
 
 # ========== Entry Point ==========
