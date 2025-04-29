@@ -27,35 +27,37 @@ def get_activation(Theta_i, x_i):
     return z,a
 
 def forward_propagation(Theta, X):
-     # input layer
     x_list = input_vector(X) 
-    output=0
+    all_a_lists = []  # 🔥 모든 instance의 레이어별 a값 저장 리스트
+
     for i, x_i in enumerate(x_list):
+        a_list = []   # 🔥 하나의 인스턴스에 대해 레이어별 a값을 저장할 리스트
         print(f"=== Training instance {i+1} ===")
-        print(f"Input Layer : {x_i.reshape(-1)}\n")
+
+        a_list.append(x_i)  # input layer (bias 포함)
 
         for layer_idx, Theta_i in enumerate(Theta):
-            z,a = get_activation(Theta_i, x_i)
-            
-            # 마지막 레이어가 아니면 bias 추가
+            z, a = get_activation(Theta_i, x_i)
+
             if layer_idx != len(Theta) - 1:
                 a = add_bias(a)
-                # Hidden layer 출력
                 print(f"Hidden Layer {layer_idx+1} z: {z.reshape(-1)}")
                 print(f"Hidden Layer {layer_idx+1} a: {a.reshape(-1)}\n")
             else:
-                # Output layer 출력
                 print(f"Output Layer z: {z.reshape(-1)}")
                 print(f"Output Layer a: {a.reshape(-1)}\n")
-                output=a
-            
-            # previous activation become next input
-            x_i=a
-    return output
+
+            x_i = a  # next input
+            a_list.append(a)  # 🔥 레이어별 a값 저장
+
+        all_a_lists.append(a_list)
+
+    return all_a_lists
+
 
 # backward propagation
 def log_func(x):
-    return np.log10(x)
+    return np.log(x)
 
 def cost_function(pred_y, true_y):
     pred_y = np.array(pred_y).reshape(-1, 1)  # ✅ 리스트 → np.array로 변환
@@ -65,37 +67,101 @@ def cost_function(pred_y, true_y):
     cost = -(1/m) * (true_y.T @ np.log(pred_y) + (1 - true_y).T @ np.log(1 - pred_y))
     return cost.squeeze()
 
-def blame_delta(Theta, X, y):
-    return Theta.T*previos
+def blame_delta(Theta, a_list, y):
+    Theta = [np.array(theta_i) for theta_i in Theta]
+
+    delta_list = [None] * len(Theta)
+
+    for layer_idx in reversed(range(len(Theta))):
+        Theta_i = Theta[layer_idx]
+        
+        if layer_idx == len(Theta) - 1:
+            # 출력층
+            delta = a_list[layer_idx+1] - np.array(y).reshape(-1, 1)
+            delta_list[layer_idx] = delta
+        else:
+            delta_next = delta_list[layer_idx + 1]
+            Theta_next = Theta[layer_idx + 1]
+
+            delta = (Theta_next[:,1:].T @ delta_next) * (a_list[layer_idx+1][1:] * (1 - a_list[layer_idx+1][1:]))
+            delta_list[layer_idx] = delta
+
+    return delta_list
+
+def gradient_theta(delta_list, a_list):
+    D_list = []
+
+    # 🔥 뒤에서부터 거꾸로 순회
+    for i in reversed(range(len(delta_list))):
+        delta = delta_list[i]
+        a = a_list[i]
+
+        grad = delta @ a.T  # delta × a^T
+        D_list.append(grad)
+
+    return D_list
+
+def regularized_gradient_theta(D_list, Theta, lambda_reg):
+    Theta = [np.array(theta_i) for theta_i in Theta]
+
+    print("\n=== Final regularized gradients ===")
+
+    D_list = D_list[::-1]  # 🔥 D_list를 역순으로 뒤집어줌 (Theta1부터 시작)
+    Theta = Theta          # Theta는 원래 순서대로 (Theta1부터 Theta3)
+
+    for i in range(len(D_list)):
+        Theta_idx = i + 1  # 🔥 Theta1, Theta2, Theta3 이런 식으로 번호 증가
+        D_list[i][:,1:] += (lambda_reg / len(D_list)) * Theta[i][:,1:]
+
+        print(f"\n\tFinal regularized gradients of Theta{Theta_idx}:")
+        grad_matrix = D_list[i]
+        for row in grad_matrix:
+            row_str = "  ".join(f"{val: .5f}" for val in row)
+            print(f"\t\t{row_str}")
+
+    return D_list
+
+
 
 def main(Theta, X, y, lambda_reg):
-    # Always show 5 decimal places
     np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
-    # Forward propagation -> predicted output
-    predicted_activation=forward_propagation(Theta, X)
-    predicted_activation=predicted_activation.reshape(-1)
-    
-    # Backward propagation -> 
-    cost_list=[]
-    for i in range(len(X)):
-        J=cost_function(predicted_activation, y[i])
-        print(f"J:{J}")
+    all_a_lists = forward_propagation(Theta, X)
 
+    for i, a_list in enumerate(all_a_lists):
+        print(f"=== Training instance {i+1} ===")
+
+        delta_list = blame_delta(Theta, a_list, y[i])
+
+        # delta 출력
+        for layer_idx, delta in zip(reversed(range(2, len(Theta)+2)), reversed(delta_list)):
+            print(f"\tdelta{layer_idx}: {delta.flatten()}")
+
+        # ✅ gradient 계산
+        D_list = gradient_theta(delta_list, a_list)
+
+        # ✅ gradient 출력 (Theta 번호를 제일 높은 숫자부터)
+        theta_number = len(Theta)  # 예: Theta4부터 시작
+        for grad in D_list:
+            print(f"\tGradient for Theta{theta_number}:")
+            print(grad, "\n")
+            theta_number -= 1  # 번호 하나씩 줄이기
         
+        # Final regularized gradients
+        finalized_D=regularized_gradient_theta(D_list, Theta, lambda_reg)
 
 if __name__ == "__main__":
     ########## Example 1
-    # lambda_reg = 0
-    # Theta = [
-    #     [[0.4, 0.1], [0.3, 0.2]], 
-    #     [[0.7, 0.5, 0.6]]
-    # ]
-    # X = [0.13, 0.42]
-    # y = [0.9, 0.23]
+    lambda_reg = 0
+    Theta = [
+        [[0.4, 0.1], [0.3, 0.2]], 
+        [[0.7, 0.5, 0.6]]
+    ]
+    X = [0.13, 0.42]
+    y = [0.9, 0.23]
 
 
-    ########## Example 2
+    ######### Example 2
     lambda_reg = 0.250
     X = [
         [0.32000, 0.68000],
