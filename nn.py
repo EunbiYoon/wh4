@@ -66,10 +66,6 @@ def load_dataset():
             encoded_df = pd.DataFrame(encoded, columns=[f"{col}_{i}" for i in range(encoded.shape[1])])
             X = pd.concat([X.drop(columns=[col]), encoded_df], axis=1)
 
-    if y.dtype == 'O':
-        y = (y == 'M').astype(int)
-    else:
-        y = pd.to_numeric(y)
     return X.values, y.values.reshape(-1, 1)
 
 # === Stratified K-Fold ===
@@ -92,6 +88,12 @@ def stratified_k_fold_split(X, y, k=5):
 
         folds.append((train_df, test_df))
     return folds
+
+# === mini-batch ===
+
+# === numerical descent ===
+
+# === Evaluation ===
 def my_accuracy(y_true, y_pred):
     correct = np.sum(y_true == y_pred)
     return correct / len(y_true)
@@ -109,22 +111,27 @@ def my_f1_score(y_true, y_pred):
     return 2 * (precision * recall) / (precision + recall)
 
 # === Plot Learning Curve ===
-def plot_learning_curve(model, dataset_name, hidden_layer, lam, fold_index=None):
+def plot_best_learning_curve(results, dataset_name, metric='f1'):
+    best_key = max(results, key=lambda k: results[k][metric])
+    best_info = results[best_key]
+    
+    model = best_info['model']
+    hidden_layer = best_info['hidden']
+    lam = best_info['lam']
+
     os.makedirs("evaluation", exist_ok=True)
     plt.figure()
     plt.plot(model.cost_history, marker='o')
     total_neurons = sum(hidden_layer)
-    title = f"{dataset_name} Learning Curve\nλ={lam}, Layers={len(hidden_layer)}, Neurons={total_neurons}"
-    if fold_index is not None:
-        title += f", Fold {fold_index+1}"
+    title = f"{dataset_name} BEST Learning Curve\nλ={lam}, Layers={len(hidden_layer)}, Neurons={total_neurons}"
     plt.title(title, fontsize=12)
     plt.xlabel("Epoch")
     plt.ylabel("Cost")
     plt.grid(True)
     plt.tight_layout()
-    filename = f"evaluation/{dataset_name.lower()}_curve_fold{fold_index+1}.png"
+    filename = f"evaluation/{dataset_name.lower()}_best_curve.png"
     plt.savefig(filename)
-    print(f"📉 Saved: {filename}")
+    print(f"🌟 Saved best learning curve: {filename}")
     plt.close()
 
 # === Save Metrics Table ===
@@ -173,11 +180,12 @@ def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lam = [0.25, 10]
-    hidden_layers = [[8, 6], [10,10,10]]
-    alpha = 0.01
-    epochs = 100
-    dataset_name = DATASET_NAME
+    lam = [0.25, 10] # adjustable lambda
+    hidden_layers = [[8, 6], [10, 10, 10]] # adjustable neuron, layer
+    
+    alpha = 0.01 # learning rate
+    epochs = 100 # stopping criteria
+    dataset_name = DATASET_NAME # dataset
 
     results = {}
 
@@ -201,13 +209,30 @@ def main():
                     "hidden": hidden,
                     "lam": l,
                     "acc": acc,
-                    "f1": f1
+                    "f1": f1,
+                    "model": model
                 }
 
-                plot_learning_curve(model, dataset_name, hidden, l, fold_index=i)
-
-
+    # 📋 저장: 테이블 이미지로
     save_metrics_table({dataset_name: results})
+
+    # 🌟 가장 좋은 모델 하나에 대해 학습곡선 저장
+    plot_best_learning_curve(results, dataset_name, metric='f1')  # 또는 metric='acc'
+
+    # 📊 판다스 DataFrame으로 저장
+    records = []
+    for key, val in results.items():
+        records.append({
+            "Fold": key,
+            "Hidden Layers": str(val['hidden']),
+            "Lambda": val['lam'],
+            "Accuracy": val['acc'],
+            "F1 Score": val['f1']
+        })
+    results_df = pd.DataFrame(records)
+    results_df.to_csv(f"evaluation/{dataset_name.lower()}_results.csv", index=False)
+    print(f"✅ Saved DataFrame to evaluation/{dataset_name.lower()}_results.csv")
+
 
 if __name__ == "__main__":
     main()
