@@ -3,7 +3,6 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
-from sklearn.metrics import accuracy_score, f1_score
 from propagation import backpropagation, forward_propagation, cost_function
 
 # === Dataset Setting ===
@@ -17,8 +16,6 @@ class NeuralNetwork:
         self.lam = lam
         self.weights = self.initialize_weights()
         self.cost_history = []
-        self.accuracy = []
-        self.f1 = []
 
     def initialize_weights(self):
         weights = []
@@ -79,15 +76,37 @@ def load_dataset():
 def stratified_k_fold_split(X, y, k=5):
     df = pd.DataFrame(X)
     df['label'] = y.ravel()
+
     class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)
     class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)
+
     folds = []
     for i in range(k):
         c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]
         c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]
-        fold = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
-        folds.append(fold)
+        test_df = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
+
+        remaining_c0 = pd.concat([class_0.iloc[:int(len(class_0)*i/k)], class_0.iloc[int(len(class_0)*(i+1)/k):]])
+        remaining_c1 = pd.concat([class_1.iloc[:int(len(class_1)*i/k)], class_1.iloc[int(len(class_1)*(i+1)/k):]])
+        train_df = pd.concat([remaining_c0, remaining_c1]).sample(frac=1).reset_index(drop=True)
+
+        folds.append((train_df, test_df))
     return folds
+def my_accuracy(y_true, y_pred):
+    correct = np.sum(y_true == y_pred)
+    return correct / len(y_true)
+
+def my_f1_score(y_true, y_pred):
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fp = np.sum((y_true == 0) & (y_pred == 1))
+    fn = np.sum((y_true == 1) & (y_pred == 0))
+
+    if tp + fp == 0 or tp + fn == 0:
+        return 0.0
+
+    precision = tp / (tp + fp)
+    recall = tp / (tp + fn)
+    return 2 * (precision * recall) / (precision + recall)
 
 # === Plot Learning Curve ===
 def plot_learning_curve(model, dataset_name, hidden_layer, lam, fold_index=None):
@@ -114,15 +133,29 @@ def save_metrics_table(results_by_dataset):
     for dataset_name, dataset_results in results_by_dataset.items():
         fig, ax = plt.subplots()
         ax.axis('off')
-        col_labels = ["Layer & Neuron", "Lambda", "Accuracy", "F1 Score"]
+        col_labels = ["Layer & Neuron", "Lambda", "Avg Accuracy", "Avg F1 Score"]
         cell_data = []
+
+        # 새로운 구조: key = (hidden, lam)
+        grouped = {}
         for key, val in dataset_results.items():
+            h = tuple(val['hidden'])  # list는 dict 키로 못 씀
+            l = val['lam']
+            grouped.setdefault((h, l), []).append((val['acc'], val['f1']))
+
+        # 평균 계산 후 테이블 행 추가
+        for (h, l), metrics in grouped.items():
+            accs = [m[0] for m in metrics]
+            f1s = [m[1] for m in metrics]
+            avg_acc = np.mean(accs)
+            avg_f1 = np.mean(f1s)
             cell_data.append([
-                str(val['hidden']),
-                f"{val['lam']:.2f}",
-                f"{val['acc']:.4f}",
-                f"{val['f1']:.4f}"
+                str(h),
+                f"{l:.2f}",
+                f"{avg_acc:.4f}",
+                f"{avg_f1:.4f}"
             ])
+
         table = ax.table(cellText=cell_data, colLabels=col_labels, loc='center', cellLoc='center')
         table.auto_set_font_size(False)
         table.set_fontsize(12)
@@ -134,47 +167,47 @@ def save_metrics_table(results_by_dataset):
         print(f"📋 Saved metrics table: {filename}")
         plt.close()
 
+
 # === Main Function ===
 def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
-    dataset_name = DATASET_NAME
+
+    lam = [0.25, 10]
+    hidden_layers = [[8, 6], [10,10,10]]
     alpha = 0.01
-    lam = 0.25
-    hidden_layers = [8, 6]  # 예시
+    epochs = 100
+    dataset_name = DATASET_NAME
 
     results = {}
 
-    for fold_index in range(5):
-        test_fold = folds[fold_index]
-        train_folds = [f for i, f in enumerate(folds) if i != fold_index]
-        train_df = pd.concat(train_folds)
+    for h_idx, hidden in enumerate(hidden_layers):
+        for l_idx, l in enumerate(lam):
+            for i, (train_df, test_df) in enumerate(folds):
+                X_train = train_df.drop(columns=['label']).values
+                y_train = train_df['label'].values.reshape(-1, 1)
+                X_test = test_df.drop(columns=['label']).values
+                y_test = test_df['label'].values.astype(int).ravel()
 
-        X_train = train_df.drop(columns=['label']).values
-        y_train = train_df['label'].values.reshape(-1, 1)
-        X_test = test_fold.drop(columns=['label']).values
-        y_test = test_fold['label'].values.astype(int).ravel()  # ✅ 수정
+                model = NeuralNetwork(layer_sizes=[X_train.shape[1], *hidden, 1], alpha=alpha, lam=l)
+                model.fit(X_train, y_train, epochs=epochs, fold_index=i)
+                preds = model.predict(X_test)
+                preds_binary = (preds >= 0.5).astype(int).ravel()
 
-        model = NeuralNetwork(layer_sizes=[X_train.shape[1], *hidden_layers, 1], alpha=alpha, lam=lam)
-        model.fit(X_train, y_train, epochs=100, fold_index=fold_index)
-        preds = model.predict(X_test)
-        preds_binary = (preds >= 0.5).astype(int).ravel()  # ✅ 수정
+                acc = my_accuracy(y_test, preds_binary)
+                f1 = my_f1_score(y_test, preds_binary)
 
-        acc = accuracy_score(y_test, preds_binary)
-        f1 = f1_score(y_test, preds_binary)
-        print(f"✅ Fold {fold_index+1} - Accuracy: {acc:.4f}, F1: {f1:.4f}")
+                results[f"Fold {i+1}-H{h_idx+1}-L{l_idx+1}"] = {
+                    "hidden": hidden,
+                    "lam": l,
+                    "acc": acc,
+                    "f1": f1
+                }
 
-        results[f"Fold {fold_index+1}"] = {
-            "hidden": hidden_layers,
-            "lam": lam,
-            "acc": acc,
-            "f1": f1
-        }
+                plot_learning_curve(model, dataset_name, hidden, l, fold_index=i)
 
-        plot_learning_curve(model, dataset_name, hidden_layers, lam, fold_index)
 
     save_metrics_table({dataset_name: results})
 
-# === Entry Point ===
 if __name__ == "__main__":
     main()
