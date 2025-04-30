@@ -54,18 +54,31 @@ def forward_propagation(Theta, X):
 def log_func(x):
     return np.log(x)
 
-def cost_function(pred_y_list, true_y_list):
+def cost_function(pred_y_list, true_y_list, Theta, lambda_reg):
     J_list = []
 
     for pred_y, true_y in zip(pred_y_list, true_y_list):
         pred_y = np.array(pred_y).reshape(-1, 1)
         true_y = np.array(true_y).reshape(-1, 1)
-
+        # (행렬 버전: J = - [ yᵗ log(f) + (1 - y)ᵗ log(1 - f) ])
         cost = -(true_y.T @ np.log(pred_y) + (1 - true_y).T @ np.log(1 - pred_y))
-        J_list.append(cost.item())  # scalar로 저장
+        J_list.append(cost.item())
 
-    final_cost = sum(J_list) / len(J_list)
-    return J_list, final_cost
+    m = len(true_y_list)
+    # J = J/n
+    cost_no_reg = sum(J_list) / m
+
+    # ✅ 정규화 항 추가
+    reg_term = 0
+    for theta in Theta:
+        theta = np.array(theta)
+        # S = theta^2
+        reg_term += np.sum(theta[:, 1:] ** 2)
+    # S = S * (lambda / 2m)
+    reg_term = reg_term* (lambda_reg / (2 * m))
+
+    # J_list, final_J = J+S
+    return J_list, cost_no_reg + reg_term
 
 
 
@@ -150,14 +163,14 @@ def main(Theta, X, y, lambda_reg):
     # cost function 
     pred_y_list = [a_list[-1] for a_list in all_a_lists]
     true_y_list = y
-    J_list, final_cost = cost_function(pred_y_list, true_y_list)
+    J_list, final_cost = cost_function(pred_y_list, true_y_list, Theta, lambda_reg)
     finalized_D, D_list, delta_list = backpropagation(Theta, all_a_lists, y, lambda_reg)
     debug_text.main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D)
 
 
 # ========== Entry Point ==========
 if __name__ == "__main__":
-    ########## Example 1
+    ######### Example 1
     lambda_reg = 0
     Theta = [
         [[0.4, 0.1], [0.3, 0.2]],
@@ -166,7 +179,7 @@ if __name__ == "__main__":
     X = [[0.13], [0.42]]
     y = [[0.9], [0.23]]
 
-    ########## Example 2
+    # ########## Example 2
     # lambda_reg = 0.250
     # X = [
     #     [0.32000, 0.68000],

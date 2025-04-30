@@ -6,12 +6,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.pipeline import Pipeline
 
-# ===== Activation functions =====
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-def sigmoid_gradient(z):
-    return sigmoid(z) * (1 - sigmoid(z))
 
 # ===== Neural Network Class =====
 class NeuralNetwork:
@@ -31,51 +25,13 @@ class NeuralNetwork:
         return weights
 
     def forward_propagation(self, X):
-        a = X
-        activations = [a]
-        zs = []
 
-        for W in self.weights:
-            a = np.insert(a, 0, 1, axis=1)  # Add bias unit
-            z = a @ W.T
-            zs.append(z)
-            a = sigmoid(z)
-            activations.append(a)
-
-        return activations, zs
 
     def compute_cost(self, y_pred, y_true, m):
-        term = -y_true * np.log(y_pred) - (1 - y_true) * np.log(1 - y_pred)
-        cost = np.sum(term) / m
 
-        reg = 0
-        for W in self.weights:
-            reg += np.sum(W[:, 1:] ** 2)
-        cost += (self.lam / (2 * m)) * reg
-        return cost
 
     def backpropagation(self, X, y):
-        m = X.shape[0]
-        Delta = [np.zeros(W.shape) for W in self.weights]
 
-        A, Z = self.forward_propagation(X)
-        delta = A[-1] - y  # Output layer error
-
-        for l in reversed(range(len(self.weights))):
-            a_prev = np.insert(A[l], 0, 1, axis=1)
-            Delta[l] += delta.T @ a_prev
-
-            if l > 0:
-                W_no_bias = self.weights[l][:, 1:]
-                delta = (delta @ W_no_bias) * sigmoid_gradient(Z[l - 1])
-
-        gradients = []
-        for i in range(len(self.weights)):
-            grad = Delta[i] / m
-            grad[:, 1:] += (self.lam / m) * self.weights[i][:, 1:]
-            gradients.append(grad)
-
-        return gradients
 
     def update_weights(self, gradients):
         for i in range(len(self.weights)):

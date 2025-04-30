@@ -1,92 +1,75 @@
 import numpy as np
-import sys
-
-
 
 def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D): 
-    sys.stdout = open("backprop_debug.txt", "w")
+    with open("backprop_debug.txt", "w", encoding="utf-8") as f:
+        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
-    # ✅ 정식 함수 이름으로 수정
-    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
+        def println(line=""):
+            f.write(line + "\n")
 
-    print(f"Regularization parameter lambda={lambda_reg:.3f}\n")
+        println(f"Regularization parameter lambda={lambda_reg:.3f}\n")
 
-    # 구조 출력
-    structure = [len(X[0])] + [len(t) for t in Theta]
-    print("Initializing the network with the following structure (number of neurons per layer):", str(structure).replace(",", ""), "\n")
+        structure = [len(X[0])] + [len(t) for t in Theta]
+        println("Initializing the network with the following structure (number of neurons per layer): " + str(structure).replace(",", "") + "\n")
 
-    # Theta 출력
-    for i, theta in enumerate(Theta):
-        print(f"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):")
-        for row in theta:
-            print("\t" + "  ".join(f"{val:.5f}" for val in row))
-        print()
+        for i, theta in enumerate(Theta):
+            println(f"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):")
+            for row in theta:
+                println("\t" + "  ".join(f"{val:.5f}" for val in row) + "  ")
+            println()
 
-    # Training set 출력
-    print("\nTraining set")
-    for i, (x_i, y_i) in enumerate(zip(X, y)):
-        print(f"\tTraining instance {i+1}")
-        print(f"\t\tx: [{ '   '.join(f'{val:.5f}' for val in x_i) }]")
-        print(f"\t\ty: [{ '   '.join(f'{val:.5f}' for val in y_i) }]")
+        println("\nTraining set")
+        for i, (x_i, y_i) in enumerate(zip(X, y)):
+            println(f"\tTraining instance {i+1}")
+            println(f"\t\tx: [{ '   '.join(f'{val:.5f}' for val in x_i) }]")
+            println(f"\t\ty: [{ '   '.join(f'{val:.5f}' for val in y_i) }]")
 
-    print("\n--------------------------------------------")    
-    print("Computing the error/cost, J, of the network")
-    for i, (x_i, y_i, a_list, z_list, cost) in enumerate(zip(X, y, all_a_lists, all_z_lists, J_list)):
-        print(f"\tProcessing training instance {i+1}")
-        print(f"\tForward propagating the input [{ '   '.join(f'{val:.5f}' for val in x_i) }]")
-        
-        # a1 (input with bias)
-        print(f"\t\ta1: [{ '   '.join(f'{val.item():.5f}' for val in a_list[0]) }]\n")
+        println("\n--------------------------------------------")    
+        println("Computing the error/cost, J, of the network")
 
-        # z2, a2
-        print(f"\t\tz2: [{ '   '.join(f'{val.item():.5f}' for val in z_list[0]) }]")
-        print(f"\t\ta2: [{ '   '.join(f'{val.item():.5f}' for val in a_list[1]) }]\n")
+        for i, (x_i, y_i, a_list, z_list, cost) in enumerate(zip(X, y, all_a_lists, all_z_lists, J_list)):
+            println(f"\tProcessing training instance {i+1}")
+            println(f"\tForward propagating the input [{ '   '.join(f'{val:.5f}' for val in x_i) }]")
+            
+            # a1 (input with bias)
+            println(f"\t\ta1: [{ '   '.join(f'{val.item():.5f}' for val in a_list[0]) }]\n")
 
-        # z3, a3
-        print(f"\t\tz3: [{ '   '.join(f'{val.item():.5f}' for val in z_list[1]) }]")
-        print(f"\t\ta3: [{ '   '.join(f'{val.item():.5f}' for val in a_list[2]) }]\n")
+            # 출력 z2~zL, a2~aL
+            for layer_idx in range(len(z_list)):
+                z_num = layer_idx + 2
+                a_num = layer_idx + 2
+                println(f"\t\tz{z_num}: [{ '   '.join(f'{val.item():.5f}' for val in z_list[layer_idx]) }]")
+                println(f"\t\ta{a_num}: [{ '   '.join(f'{val.item():.5f}' for val in a_list[layer_idx + 1]) }]\n")
 
-        # f(x)
-        fx = a_list[-1]
-        print(f"\t\tf(x): [{ '   '.join(f'{val.item():.5f}' for val in fx) }]")
-        print(f"\tPredicted output for instance {i+1}: [{ '   '.join(f'{val.item():.5f}' for val in fx) }]")
-        print(f"\tExpected output for instance {i+1}: [{ '   '.join(f'{val:.5f}' for val in y_i) }]")
-        print(f"\tCost, J, associated with instance {i+1}: {cost:.3f}\n")
+            # 최종 출력
+            fx = a_list[-1]
+            println(f"\t\tf(x): [{ '   '.join(f'{val.item():.5f}' for val in fx) }]")
+            println(f"\tPredicted output for instance {i+1}: [{ '   '.join(f'{val.item():.5f}' for val in fx) }]")
+            println(f"\tExpected output for instance {i+1}: [{ '   '.join(f'{val:.5f}' for val in y_i) }]")
+            println(f"\tCost, J, associated with instance {i+1}: {cost:.3f}\n")
 
-    print(f"Final (regularized) cost, J, based on the complete training set: {final_cost:.5f}")
+        println(f"Final (regularized) cost, J, based on the complete training set: {final_cost:.5f}")
 
-    print("\n\n\n--------------------------------------------")
-    print("Running backpropagation")
+        println("\n\n\n--------------------------------------------")
+        println("Running backpropagation")
 
-    for i, (delta_list, grad_list) in enumerate(zip(delta_list, D_list)):
-        print(f"\tComputing gradients based on training instance {i+1}")
-        
-        # delta 출력
-        for j, delta in enumerate(delta_list[::-1]):
-            layer_num = len(delta_list) + 1 - j
-            flat_delta = [f"{val.item():.5f}" for val in delta.flatten()]
-            print(f"\t\tdelta{layer_num}: [{ '   '.join(flat_delta) }]")
-        print()
+        for i, (delta_set, grad_set) in enumerate(zip(delta_list, D_list)):
+            println(f"\tComputing gradients based on training instance {i+1}")
+            for j, delta in enumerate(delta_set[::-1]):
+                layer_num = len(delta_set) + 1 - j
+                flat = [f"{v.item():.5f}" for v in delta.flatten()]
+                println(f"\t\tdelta{layer_num}: [{ '   '.join(flat) }]")
+            println()
+            for j, grad in enumerate(grad_set[::-1]):
+                theta_num = len(grad_set) - j
+                println(f"\t\tGradients of Theta{theta_num} based on training instance {i+1}:")
+                for row in grad:
+                    println("\t\t\t" + "  ".join(f"{val:.5f}" for val in row) + "  ")
+                println()
 
-        # Gradients 출력
-        for j, grad in enumerate(grad_list[::-1]):
-            theta_num = len(grad_list) - j
-            print(f"\t\tGradients of Theta{theta_num} based on training instance {i+1}:")
+        println("\tThe entire training set has been processed. Computing the average (regularized) gradients:")
+        for i, grad in enumerate(finalized_D):
+            println(f"\t\tFinal regularized gradients of Theta{i+1}:")
             for row in grad:
-                try:
-                    print("\t\t\t" + "  ".join(f"{val:.5f}" for val in row))
-                except TypeError:
-                    print("\t\t\t" + f"{row:.5f}")
-            print()
-
-    print("\tThe entire training set has been processed. Computing the average (regularized) gradients:")
-    for i, grad in enumerate(finalized_D):
-        print(f"\t\tFinal regularized gradients of Theta{i+1}:")
-        for row in grad:
-            try:
-                print("\t\t\t" + "  ".join(f"{val:.5f}" for val in row))
-            except TypeError:
-                print("\t\t\t" + f"{row:.5f}")
-        print()
-
-    sys.stdout.close()
+                println("\t\t\t" + "  ".join(f"{val:.5f}" for val in row) + "  ")
+            println()

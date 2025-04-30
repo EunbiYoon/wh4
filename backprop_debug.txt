@@ -1,13 +1,13 @@
 Regularization parameter lambda=0.000
 
-Initializing the network with the following structure (number of neurons per layer): [1 2 1] 
+Initializing the network with the following structure (number of neurons per layer): [1 2 1]
 
 Initial Theta1 (the weights of each neuron, including the bias weight, are stored in the rows):
-	0.40000  0.10000
-	0.30000  0.20000
+	0.40000  0.10000  
+	0.30000  0.20000  
 
 Initial Theta2 (the weights of each neuron, including the bias weight, are stored in the rows):
-	0.70000  0.50000  0.60000
+	0.70000  0.50000  0.60000  
 
 
 Training set
@@ -61,28 +61,28 @@ Running backpropagation
 		delta2: [-0.01270   -0.01548]
 
 		Gradients of Theta2 based on training instance 1:
-			-0.10597  -0.06378  -0.06155
+			-0.10597  -0.06378  -0.06155  
 
 		Gradients of Theta1 based on training instance 1:
-			-0.01270  -0.00165
-			-0.01548  -0.00201
+			-0.01270  -0.00165  
+			-0.01548  -0.00201  
 
 	Computing gradients based on training instance 2
 		delta3: [0.56597]
 		delta2: [0.06740   0.08184]
 
 		Gradients of Theta2 based on training instance 2:
-			0.56597  0.34452  0.33666
+			0.56597  0.34452  0.33666  
 
 		Gradients of Theta1 based on training instance 2:
-			0.06740  0.02831
-			0.08184  0.03437
+			0.06740  0.02831  
+			0.08184  0.03437  
 
 	The entire training set has been processed. Computing the average (regularized) gradients:
 		Final regularized gradients of Theta1:
-			0.02735  0.01333
-			0.03318  0.01618
+			0.02735  0.01333  
+			0.03318  0.01618  
 
 		Final regularized gradients of Theta2:
-			0.23000  0.14037  0.13756
+			0.23000  0.14037  0.13756  
 
