@@ -86,7 +86,6 @@ def blame_delta(Theta, a_list, y):
 
             delta = (Theta_next[:,1:].T @ delta_next) * (a_list[layer_idx+1][1:] * (1 - a_list[layer_idx+1][1:]))
             delta_list[layer_idx] = delta
-
     return delta_list
 
 def gradient_theta(delta_list, a_list):
@@ -99,47 +98,48 @@ def gradient_theta(delta_list, a_list):
 
         grad = delta @ a.T
         D_list.append(grad)
-
     return D_list
 
-def regularized_gradient_theta(D_list, Theta, lambda_reg, m):
+def regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m):
     Theta = [np.array(theta_i) for theta_i in Theta]
 
-    for i in range(len(D_list)):
-        Theta_idx = i+1
-        D_list[i][:,1:] += (lambda_reg / m) * Theta[i][:,1:]  # 🔥 여기 수정: lambda/m
+    num_layers = len(Theta)
+    avg_D_list = []
 
-        grad_matrix = D_list[i]
-        for row in grad_matrix:
-            row_str = "  ".join(f"{val: .5f}" for val in row)
+    for layer_idx in range(num_layers):
+        # ⬇ 해당 레이어에 대해 모든 인스턴스의 gradient 누적 합산
+        sum_grad = sum(instance_D[layer_idx] for instance_D in all_D_lists)
 
-    return D_list
+        # ⬇ 평균 계산
+        avg_grad = sum_grad / m
+
+        # ⬇ 정규화 (bias 제외하고)
+        avg_grad[:, 1:] += (lambda_reg / m) * Theta[layer_idx][:, 1:]
+
+        avg_D_list.append(avg_grad)
+
+    return avg_D_list
 
 
 def backpropagation(Theta, all_a_lists, y, lambda_reg):
-    m = len(all_a_lists)  # 🔥 학습 데이터 개수 (2개)
-
-    accumulated_D_lists = None
+    # ✅ 평균 누적용 초기화
+    all_D_lists = []
+    all_delta_lists = []
+    average_D_lists=[]
 
     for i, a_list in enumerate(all_a_lists):
+        # a 만큼 detla 값 반복해서 쌓기
         delta_list = blame_delta(Theta, a_list, y[i])
-
-        # ✅ gradient 계산
+        all_delta_lists.append(delta_list)
+        # a 만큼 D 값 반복해서 쌓기
         D_list = gradient_theta(delta_list, a_list)
+        all_D_lists.append(D_list)
+    
+    # ✅ 정규화된 gradient 계산
+    m = len(all_a_lists)  # training instance #
+    finalized_D = regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m)
+    return finalized_D, all_D_lists, all_delta_lists
 
-        if accumulated_D_lists is None:
-            accumulated_D_lists = D_list
-        else:
-            for j in range(len(D_list)):
-                accumulated_D_lists[j] += D_list[j]
-
-    # ✅ 평균 내기
-    for j in range(len(accumulated_D_lists)):
-        accumulated_D_lists[j] /= m
-
-    # ✅ Final regularized gradients 출력
-    finalized_D = regularized_gradient_theta(accumulated_D_lists, Theta, lambda_reg, m)
-    return finalized_D, D_list, delta_list
 
 # ========== Main ==========
 def main(Theta, X, y, lambda_reg):
@@ -151,9 +151,7 @@ def main(Theta, X, y, lambda_reg):
     pred_y_list = [a_list[-1] for a_list in all_a_lists]
     true_y_list = y
     J_list, final_cost = cost_function(pred_y_list, true_y_list)
-
     finalized_D, D_list, delta_list = backpropagation(Theta, all_a_lists, y, lambda_reg)
-
     debug_text.main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D)
 
 

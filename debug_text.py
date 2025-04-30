@@ -4,6 +4,8 @@ import sys
 
 
 def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D): 
+    sys.stdout = open("backprop_debug.txt", "w")
+
     # ✅ 정식 함수 이름으로 수정
     np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
@@ -21,7 +23,7 @@ def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, 
         print()
 
     # Training set 출력
-    print("Training set")
+    print("\nTraining set")
     for i, (x_i, y_i) in enumerate(zip(X, y)):
         print(f"\tTraining instance {i+1}")
         print(f"\t\tx: [{ '   '.join(f'{val:.5f}' for val in x_i) }]")
@@ -55,9 +57,7 @@ def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, 
 
     print("\n\n\n--------------------------------------------")
     print("Running backpropagation")
-    print(f"delta_list: {delta_list}")
-    print(f"D_list: {D_list}")
-    
+
     for i, (delta_list, grad_list) in enumerate(zip(delta_list, D_list)):
         print(f"\tComputing gradients based on training instance {i+1}")
         
@@ -81,9 +81,12 @@ def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, 
 
     print("\tThe entire training set has been processed. Computing the average (regularized) gradients:")
     for i, grad in enumerate(finalized_D):
-        print(f"\n\t\tFinal regularized gradients of Theta{i+1}:")
+        print(f"\t\tFinal regularized gradients of Theta{i+1}:")
         for row in grad:
             try:
                 print("\t\t\t" + "  ".join(f"{val:.5f}" for val in row))
             except TypeError:
                 print("\t\t\t" + f"{row:.5f}")
+        print()
+
+    sys.stdout.close()
