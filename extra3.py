@@ -19,12 +19,12 @@ def unflatten_weights(flattened, shapes):
     return weights
 
 # === Cost Function Wrapper ===
-def make_cost_function(X, y, shapes, lam):
+def make_cost_function(X, y, shapes, lambda_reg):
     def J(theta_flat):
         weights = unflatten_weights(theta_flat, shapes)
         all_a_lists, _ = forward_propagation(weights, X)
         pred_y_list = [a_list[-1] for a_list in all_a_lists]
-        _, final_cost = cost_function(pred_y_list, y, weights, lam)
+        _, final_cost = cost_function(pred_y_list, y, weights, lambda_reg)
         return final_cost
     return J
 
@@ -40,10 +40,10 @@ def compute_numerical_gradient(J, theta, epsilon=1e-4):
     return num_grad
 
 # === Main Entry for Numerical Gradient Update ===
-def numerical_gradient_update(weights, X, y, lam, alpha):
+def numerical_gradient_update(weights, X, y, lambda_reg, alpha):
     shapes = [w.shape for w in weights]
     theta_flat = flatten_weights(weights)
-    J = make_cost_function(X, y, shapes, lam)
+    J = make_cost_function(X, y, shapes, lambda_reg)
     grad_flat = compute_numerical_gradient(J, theta_flat)
     grad_structured = unflatten_weights(grad_flat, shapes)
     # Update weights manually here and return new ones
@@ -55,19 +55,19 @@ def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lam = [0.25, 0.5]
+    lambda_reg_list = [0.25, 0.5]
     hidden_layers = [[8, 6], [8, 6, 4], [4]]
     
     alpha = 0.01
     epochs = 100
-    batch_size = 16         # 🔹 원하는 배치 사이즈
-    mode = "mini-batch"     # 🔹 또는 "batch"
+    batch_size = 16
+    mode = "mini-batch"
 
     dataset_name = DATASET_NAME
     results = {}
 
     for h_idx, hidden in enumerate(hidden_layers):
-        for l_idx, l in enumerate(lam):
+        for l_idx, lambda_reg in enumerate(lambda_reg_list):
             for i, (train_df, test_df) in enumerate(folds):
                 X_train = train_df.drop(columns=['label']).values
                 y_train = train_df['label'].values.reshape(-1, 1)
@@ -77,10 +77,9 @@ def main():
                 model = NeuralNetwork(
                     layer_sizes=[X_train.shape[1], *hidden, 1],
                     alpha=alpha,
-                    lam=l
+                    lambda_reg=lambda_reg
                 )
 
-                # 🔽 mode, batch_size 함께 전달
                 model.fit(
                     X_train, y_train,
                     epochs=epochs,
@@ -97,13 +96,11 @@ def main():
 
                 results[f"Fold {i+1}-H{h_idx+1}-L{l_idx+1}"] = {
                     "hidden": hidden,
-                    "lam": l,
+                    "lambda_reg": lambda_reg,
                     "acc": acc,
                     "f1": f1,
                     "model": model
                 }
-
-    # 이후 저장 및 시각화는 그대로
 
     # 📋 저장: 테이블 이미지로
     save_metrics_table({dataset_name: results}, "evaluation_extra3")
@@ -117,7 +114,7 @@ def main():
         records.append({
             "Fold": key,
             "Hidden Layers": str(val['hidden']),
-            "Lambda": val['lam'],
+            "lambda_reg": val['lambda_reg'],
             "Accuracy": val['acc'],
             "F1 Score": val['f1']
         })

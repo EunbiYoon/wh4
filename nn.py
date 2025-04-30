@@ -10,26 +10,29 @@ DATASET_NAME = "wdbc"
 
 # === Neural Network Class ===
 class NeuralNetwork:
-    def __init__(self, layer_sizes, alpha=0.01, lam=0.0):
-        self.layer_sizes = layer_sizes
-        self.alpha = alpha
-        self.lam = lam
-        self.weights = self.initialize_weights()
-        self.cost_history = []
+    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):
+        self.layer_sizes = layer_sizes  # Number of neurons in each layer
+        self.alpha = alpha              # Learning rate
+        self.lambda_reg = lambda_reg                  # Regularization parameter
+        self.weights = self.initialize_weights()  # Initialize weights
+        self.cost_history = []          # Store cost at each epoch
 
+    # Initialize weights using He initialization
     def initialize_weights(self):
         weights = []
         for i in range(len(self.layer_sizes) - 1):
-            l_in = self.layer_sizes[i] + 1
+            l_in = self.layer_sizes[i] + 1  # +1 for bias
             l_out = self.layer_sizes[i + 1]
-            weight = np.random.randn(l_out, l_in) * np.sqrt(1 / l_in)
+            weight = np.random.uniform(-1, 1, size=(l_out, l_in))
             weights.append(weight)
         return weights
 
+    # Update weights using gradients
     def update_weights(self, gradients):
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * gradients[i]
 
+    # Fit the model using either batch or mini-batch gradient descent
     def fit(self, X, y, epochs=100, batch_size=32, fold_index=None, mode='batch'):
         m = X.shape[0]
         for epoch in range(epochs):
@@ -43,48 +46,46 @@ class NeuralNetwork:
                     end = start + batch_size
                     X_batch = X_shuffled[start:end]
                     y_batch = y_shuffled[start:end]
-
                     all_a_lists, _ = forward_propagation(self.weights, X_batch)
-                    finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y_batch, self.lam)
+                    finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y_batch, self.lambda_reg)
                     self.update_weights(finalized_D)
 
             elif mode == 'batch':
-                # ✅ 셔플 추가
                 indices = np.arange(m)
                 np.random.shuffle(indices)
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
 
                 all_a_lists, _ = forward_propagation(self.weights, X)
-                finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lam)
+                finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lambda_reg)
                 self.update_weights(finalized_D)
-
             else:
-                raise ValueError("Mode must be either 'batch' or 'mini-batch'")
+                raise ValueError("Mode must be either 'batch' or 'mini-batch')")
 
-            # === Cost logging (epoch 단위로)
             all_a_lists, _ = forward_propagation(self.weights, X)
             pred_ys = [a_list[-1] for a_list in all_a_lists]
-            _, final_cost = cost_function(pred_ys, y, self.weights, self.lam)
+            _, final_cost = cost_function(pred_ys, y, self.weights, self.lambda_reg)
             self.cost_history.append(final_cost)
             if epoch % 10 == 0:
                 prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
                 print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.4f}")
 
-
+    # Predict output for given input
     def predict(self, X):
         all_a_lists, _ = forward_propagation(self.weights, X)
         return np.array([a_list[-1] for a_list in all_a_lists])
 
-# === Data Loading ===
+# === Load dataset and apply preprocessing ===
 def load_dataset():
     DATA_PATH = f"datasets/{DATASET_NAME}.csv"
     df = pd.read_csv(DATA_PATH)
     if 'label' not in df.columns:
         raise ValueError("Dataset must contain a 'label' column.")
+
     y = df['label'].copy()
     X = df.drop(columns=['label'])
 
+    # Normalize numeric columns and apply one-hot encoding to categorical columns
     for col in X.columns:
         if col.endswith("_num"):
             mean = X[col].mean()
@@ -98,80 +99,64 @@ def load_dataset():
 
     return X.values, y.values.reshape(-1, 1)
 
-# === Stratified K-Fold ===
+# === Stratified K-Fold Split ===
 def stratified_k_fold_split(X, y, k=5):
     df = pd.DataFrame(X)
     df['label'] = y.ravel()
-
     class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)
     class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)
-
     folds = []
     for i in range(k):
         c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]
         c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]
         test_df = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
-
         remaining_c0 = pd.concat([class_0.iloc[:int(len(class_0)*i/k)], class_0.iloc[int(len(class_0)*(i+1)/k):]])
         remaining_c1 = pd.concat([class_1.iloc[:int(len(class_1)*i/k)], class_1.iloc[int(len(class_1)*(i+1)/k):]])
         train_df = pd.concat([remaining_c0, remaining_c1]).sample(frac=1).reset_index(drop=True)
-
         folds.append((train_df, test_df))
     return folds
 
-
-# === numerical descent ===
-
-# === Evaluation ===
+# === Accuracy Calculation ===
 def my_accuracy(y_true, y_pred):
     correct = np.sum(y_true == y_pred)
     return correct / len(y_true)
 
+# === F1 Score Calculation ===
 def my_f1_score(y_true, y_pred):
     tp = np.sum((y_true == 1) & (y_pred == 1))
     fp = np.sum((y_true == 0) & (y_pred == 1))
     fn = np.sum((y_true == 1) & (y_pred == 0))
-
     if tp == 0:
-        return 0.0  # 예측된 positive가 전혀 없거나, 실제 positive가 없으면 f1은 0
-
+        return 0.0
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-
     if precision + recall == 0:
         return 0.0
-
     return 2 * (precision * recall) / (precision + recall)
 
-
-# === Plot Learning Curve ===
+# === Plot Best Model's Learning Curve ===
 def plot_best_learning_curve(results, dataset_name, save_folder):
-    # ✅ 가장 낮은 cost를 가진 모델 선택
     best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])
     best_info = results[best_key]
     model = best_info['model']
     hidden_layer = best_info['hidden']
-    lam = best_info['lam']
+    lambda_reg = best_info['lambda_reg']
 
     os.makedirs("evaluation", exist_ok=True)
     plt.figure()
     plt.plot(model.cost_history, marker='o')
-
-    # ✅ 제목에 hidden layer를 리스트 형태로 출력
-    title = f"{dataset_name} BEST Learning Curve\nλ={lam}, Hidden={hidden_layer}"
+    title = f"{dataset_name} BEST Learning Curve\nλ={lambda_reg}, Hidden={hidden_layer}"
     plt.title(title, fontsize=12)
     plt.xlabel("Epoch")
     plt.ylabel("Cost (J)")
     plt.grid(True)
     plt.tight_layout()
-    
     filename = f"{save_folder}/{dataset_name.lower()}_best_curve.png"
     plt.savefig(filename)
     print(f"🌟 Saved best learning curve: {filename}")
     plt.close()
 
-
-# === Save Metrics Table ===
+# === Save Metrics Table as Image ===
 def save_metrics_table(results_by_dataset, save_folder):
     os.makedirs("evaluation", exist_ok=True)
     for dataset_name, dataset_results in results_by_dataset.items():
@@ -179,15 +164,11 @@ def save_metrics_table(results_by_dataset, save_folder):
         ax.axis('off')
         col_labels = ["Layer & Neuron", "Lambda", "Avg Accuracy", "Avg F1 Score"]
         cell_data = []
-
-        # 새로운 구조: key = (hidden, lam)
         grouped = {}
         for key, val in dataset_results.items():
-            h = tuple(val['hidden'])  # list는 dict 키로 못 씀
-            l = val['lam']
+            h = tuple(val['hidden'])
+            l = val['lambda_reg']
             grouped.setdefault((h, l), []).append((val['acc'], val['f1']))
-
-        # 평균 계산 후 테이블 행 추가
         for (h, l), metrics in grouped.items():
             accs = [m[0] for m in metrics]
             f1s = [m[1] for m in metrics]
@@ -199,7 +180,6 @@ def save_metrics_table(results_by_dataset, save_folder):
                 f"{avg_acc:.4f}",
                 f"{avg_f1:.4f}"
             ])
-
         table = ax.table(cellText=cell_data, colLabels=col_labels, loc='center', cellLoc='center')
         table.auto_set_font_size(False)
         table.set_fontsize(12)
@@ -211,25 +191,23 @@ def save_metrics_table(results_by_dataset, save_folder):
         print(f"📋 Saved metrics table: {filename}")
         plt.close()
 
-
-# === Main Function ===
+# === Main Execution Function ===
 def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lam = [0.25, 0.5]
-    hidden_layers = [[8, 6], [8, 6, 4], [4]]
-    
+    lambda_reg_list = [0.25, 0.5]  # Regularization values
+    hidden_layers = [[8, 6], [8, 6, 4], [4]]  # Different architectures
     alpha = 0.01
     epochs = 100
-    batch_size = 16         # 🔹 원하는 배치 사이즈
-    mode = "batch"     # 🔹 "mini-batch" 또는 "batch"
+    batch_size = 16
+    mode = "batch"
 
     dataset_name = DATASET_NAME
     results = {}
 
     for h_idx, hidden in enumerate(hidden_layers):
-        for l_idx, l in enumerate(lam):
+        for l_idx, lambda_reg in enumerate(lambda_reg_list):
             for i, (train_df, test_df) in enumerate(folds):
                 X_train = train_df.drop(columns=['label']).values
                 y_train = train_df['label'].values.reshape(-1, 1)
@@ -239,10 +217,9 @@ def main():
                 model = NeuralNetwork(
                     layer_sizes=[X_train.shape[1], *hidden, 1],
                     alpha=alpha,
-                    lam=l
+                    lambda_reg=lambda_reg
                 )
 
-                # 🔽 mode, batch_size 함께 전달
                 model.fit(
                     X_train, y_train,
                     epochs=epochs,
@@ -253,38 +230,29 @@ def main():
 
                 preds = model.predict(X_test)
                 preds_binary = (preds >= 0.5).astype(int).ravel()
-
                 acc = my_accuracy(y_test, preds_binary)
                 f1 = my_f1_score(y_test, preds_binary)
 
                 results[f"Fold {i+1}-H{h_idx+1}-L{l_idx+1}"] = {
                     "hidden": hidden,
-                    "lam": l,
+                    "lambda_reg": lambda_reg,
                     "acc": acc,
                     "f1": f1,
                     "model": model
                 }
 
-    # 이후 저장 및 시각화는 그대로
-
-    # 📋 저장: 테이블 이미지로
     save_metrics_table({dataset_name: results}, "evaluation")
-
-    # 🌟 가장 좋은 모델 하나에 대해 학습곡선 저장
     plot_best_learning_curve(results, dataset_name, "evaluation")
-
-    # 📊 판다스 DataFrame으로 저장
     records = []
     for key, val in results.items():
         records.append({
             "Fold": key,
             "Hidden Layers": str(val['hidden']),
-            "Lambda": val['lam'],
+            "Lambda": val['lambda_reg'],
             "Accuracy": val['acc'],
             "F1 Score": val['f1']
         })
     print(f"✅ Saved DataFrame to evaluation/{dataset_name.lower()}_results.csv")
-
 
 if __name__ == "__main__":
     main()
