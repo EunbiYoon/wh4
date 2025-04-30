@@ -2,11 +2,12 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from sklearn.model_selection import StratifiedKFold
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder
 from sklearn.metrics import accuracy_score, f1_score
 from propagation import backpropagation, forward_propagation, cost_function
+
+# === Dataset Setting ===
+DATASET_NAME = "wdbc"
 
 # === Neural Network Class ===
 class NeuralNetwork:
@@ -16,6 +17,8 @@ class NeuralNetwork:
         self.lam = lam
         self.weights = self.initialize_weights()
         self.cost_history = []
+        self.accuracy = []
+        self.f1 = []
 
     def initialize_weights(self):
         weights = []
@@ -30,7 +33,7 @@ class NeuralNetwork:
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * gradients[i]
 
-    def fit(self, X, y, epochs=100):
+    def fit(self, X, y, epochs=100, fold_index=None):
         for epoch in range(epochs):
             all_a_lists, _ = forward_propagation(self.weights, X)
             finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lam)
@@ -39,66 +42,84 @@ class NeuralNetwork:
             _, final_cost = cost_function(pred_ys, y, self.weights, self.lam)
             self.cost_history.append(final_cost)
             if epoch % 10 == 0:
-                print(f"Epoch {epoch} - Cost: {final_cost:.4f}")
+                prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
+                print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.4f}")
 
     def predict(self, X):
         all_a_lists, _ = forward_propagation(self.weights, X)
         return np.array([a_list[-1] for a_list in all_a_lists])
 
 # === Data Loading ===
-def one_hot_encode_data(df, target_column):
-    X = df.drop(columns=[target_column])
-    y = df[target_column].values.reshape(-1, 1)
-    categorical_cols = X.select_dtypes(include=['object', 'category']).columns.tolist()
-    numerical_cols = X.select_dtypes(include=['int64', 'float64']).columns.tolist()
-    preprocessor = ColumnTransformer([
-        ('num', StandardScaler(), numerical_cols),
-        ('cat', OneHotEncoder(sparse_output=False, handle_unknown='ignore'), categorical_cols)
-    ])
-    X_transformed = preprocessor.fit_transform(X)
-    return X_transformed, y
+def load_dataset():
+    DATA_PATH = f"datasets/{DATASET_NAME}.csv"
+    df = pd.read_csv(DATA_PATH)
+    if 'label' not in df.columns:
+        raise ValueError("Dataset must contain a 'label' column.")
+    y = df['label'].copy()
+    X = df.drop(columns=['label'])
 
-def load_wdbc_dataset(path):
-    df = pd.read_csv(path)
-    y = (df['label'] == 'M').astype(int).values.reshape(-1, 1)
-    X = df.drop(columns=['label']).values
-    X_scaled = StandardScaler().fit_transform(X)
-    return X_scaled, y
+    for col in X.columns:
+        if col.endswith("_num"):
+            mean = X[col].mean()
+            std = X[col].std()
+            X[col] = (X[col] - mean) / std
+        elif col.endswith("_cat"):
+            encoder = OneHotEncoder(sparse_output=False, handle_unknown='ignore')
+            encoded = encoder.fit_transform(X[[col]])
+            encoded_df = pd.DataFrame(encoded, columns=[f"{col}_{i}" for i in range(encoded.shape[1])])
+            X = pd.concat([X.drop(columns=[col]), encoded_df], axis=1)
 
-def load_loan_dataset(path):
-    df = pd.read_csv(path)
-    return one_hot_encode_data(df, target_column='label')
+    if y.dtype == 'O':
+        y = (y == 'M').astype(int)
+    else:
+        y = pd.to_numeric(y)
+    return X.values, y.values.reshape(-1, 1)
+
+# === Stratified K-Fold ===
+def stratified_k_fold_split(X, y, k=5):
+    df = pd.DataFrame(X)
+    df['label'] = y.ravel()
+    class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)
+    class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)
+    folds = []
+    for i in range(k):
+        c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]
+        c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]
+        fold = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
+        folds.append(fold)
+    return folds
 
 # === Plot Learning Curve ===
-def plot_learning_curve(model, dataset_name, hidden_layer, lam):
+def plot_learning_curve(model, dataset_name, hidden_layer, lam, fold_index=None):
+    os.makedirs("evaluation", exist_ok=True)
     plt.figure()
     plt.plot(model.cost_history, marker='o')
-    num_layers = len(hidden_layer)
     total_neurons = sum(hidden_layer)
-    plt.title(f"{dataset_name} Learning Curve\n"
-              f"λ={lam}, Layers={num_layers}, Neurons={total_neurons}", fontsize=12)
+    title = f"{dataset_name} Learning Curve\nλ={lam}, Layers={len(hidden_layer)}, Neurons={total_neurons}"
+    if fold_index is not None:
+        title += f", Fold {fold_index+1}"
+    plt.title(title, fontsize=12)
     plt.xlabel("Epoch")
     plt.ylabel("Cost")
     plt.grid(True)
     plt.tight_layout()
-    filename = f"learning_curve/{dataset_name.lower()}_curve.png"
+    filename = f"evaluation/{dataset_name.lower()}_curve_fold{fold_index+1}.png"
     plt.savefig(filename)
     print(f"📉 Saved: {filename}")
+    plt.close()
 
-# === Save Accuracy/F1 Table ===
-def save_metrics_table_as_image(results_by_dataset):
+# === Save Metrics Table ===
+def save_metrics_table(results_by_dataset):
+    os.makedirs("evaluation", exist_ok=True)
     for dataset_name, dataset_results in results_by_dataset.items():
         fig, ax = plt.subplots()
         ax.axis('off')
         col_labels = ["Layer & Neuron", "Lambda", "Accuracy", "F1 Score"]
         cell_data = []
         for key, val in dataset_results.items():
-            layer_idx = int(key.split('_')[0][1:]) - 1
-            hidden_layer = hidden_layers_list[layer_idx // len(lambda_reg_list)]
-            lam = lambda_reg_list[layer_idx % len(lambda_reg_list)]
             cell_data.append([
-                str(hidden_layer),
-                f"{lam:.2f}",
+                str(val['hidden']),
+                f"{val['lam']:.2f}",
                 f"{val['acc']:.4f}",
                 f"{val['f1']:.4f}"
             ])
@@ -108,53 +129,52 @@ def save_metrics_table_as_image(results_by_dataset):
         table.scale(1.1, 1.6)
         plt.title(f"{dataset_name} Model Performance", fontweight='bold')
         plt.tight_layout()
-        filename = f"learning_curve/{dataset_name.lower()}_table.png"
+        filename = f"evaluation/{dataset_name.lower()}_table.png"
         plt.savefig(filename)
         print(f"📋 Saved metrics table: {filename}")
+        plt.close()
 
-# === Main Execution ===
+# === Main Function ===
+def main():
+    X, y = load_dataset()
+    folds = stratified_k_fold_split(X, y, k=5)
+    dataset_name = DATASET_NAME
+    alpha = 0.01
+    lam = 0.25
+    hidden_layers = [8, 6]  # 예시
+
+    results = {}
+
+    for fold_index in range(5):
+        test_fold = folds[fold_index]
+        train_folds = [f for i, f in enumerate(folds) if i != fold_index]
+        train_df = pd.concat(train_folds)
+
+        X_train = train_df.drop(columns=['label']).values
+        y_train = train_df['label'].values.reshape(-1, 1)
+        X_test = test_fold.drop(columns=['label']).values
+        y_test = test_fold['label'].values.astype(int).ravel()  # ✅ 수정
+
+        model = NeuralNetwork(layer_sizes=[X_train.shape[1], *hidden_layers, 1], alpha=alpha, lam=lam)
+        model.fit(X_train, y_train, epochs=100, fold_index=fold_index)
+        preds = model.predict(X_test)
+        preds_binary = (preds >= 0.5).astype(int).ravel()  # ✅ 수정
+
+        acc = accuracy_score(y_test, preds_binary)
+        f1 = f1_score(y_test, preds_binary)
+        print(f"✅ Fold {fold_index+1} - Accuracy: {acc:.4f}, F1: {f1:.4f}")
+
+        results[f"Fold {fold_index+1}"] = {
+            "hidden": hidden_layers,
+            "lam": lam,
+            "acc": acc,
+            "f1": f1
+        }
+
+        plot_learning_curve(model, dataset_name, hidden_layers, lam, fold_index)
+
+    save_metrics_table({dataset_name: results})
+
+# === Entry Point ===
 if __name__ == "__main__":
-    os.makedirs("learning_curve", exist_ok=True)
-    hidden_layers_list = [[2], [4, 4, 4], [6, 6, 6, 6]]
-    lambda_reg_list = [0.01, 0.1]
-    alpha = 0.1
-    epochs = 100
-
-    for dataset_name, (X, y) in {"WDBC": load_wdbc_dataset("wdbc.csv"), "Loan": load_loan_dataset("loan.csv")}.items():
-        results_by_dataset = {dataset_name: {}}
-        results_with_model = {}
-        config_idx = 0
-
-        for i, hidden_layer in enumerate(hidden_layers_list):
-            for j, lam in enumerate(lambda_reg_list):
-                print(f"\n📘 {dataset_name}: hidden={hidden_layer}, λ={lam}")
-                model = NeuralNetwork([X.shape[1]] + hidden_layer + [1], alpha=alpha, lam=lam)
-                model.fit(X, y, epochs=epochs)
-
-                y_pred = (model.predict(X) >= 0.5).astype(int).ravel()
-                y_true = y.ravel()
-                acc = accuracy_score(y_true, y_pred)
-                f1 = f1_score(y_true, y_pred, zero_division=1)
-
-                config_name = f"h{config_idx+1}_λ{lam}"
-                results_by_dataset[dataset_name][config_name] = {"acc": acc, "f1": f1}
-                results_with_model[f"{dataset_name}_{config_name}"] = {
-                    "model": model,
-                    "dataset_name": dataset_name,
-                    "acc": acc,
-                    "f1": f1
-                }
-                config_idx += 1
-
-        # === Best model (per dataset)
-        filtered = {k: v for k, v in results_with_model.items() if v['dataset_name'] == dataset_name}
-        best_key = max(filtered.items(), key=lambda x: (x[1]['f1'], x[1]['acc']))[0]
-        best_model = results_with_model[best_key]["model"]
-        layer_idx = int(best_key.split('_')[1][1:]) - 1
-        best_hidden_layer = hidden_layers_list[layer_idx // len(lambda_reg_list)]
-        best_lam = lambda_reg_list[layer_idx % len(lambda_reg_list)]
-        print(f"\n🎯 Best {dataset_name} Model: {best_key}")
-        plot_learning_curve(best_model, dataset_name.lower() + "_best", best_hidden_layer, best_lam)
-
-        # === Save performance table (per dataset)
-        save_metrics_table_as_image(results_by_dataset)
+    main()
