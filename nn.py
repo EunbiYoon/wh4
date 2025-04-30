@@ -22,7 +22,7 @@ class NeuralNetwork:
         for i in range(len(self.layer_sizes) - 1):
             l_in = self.layer_sizes[i] + 1
             l_out = self.layer_sizes[i + 1]
-            weight = np.random.randn(l_out, l_in) * np.sqrt(2 / l_in)
+            weight = np.random.randn(l_out, l_in) * np.sqrt(1 / l_in)
             weights.append(weight)
         return weights
 
@@ -49,6 +49,12 @@ class NeuralNetwork:
                     self.update_weights(finalized_D)
 
             elif mode == 'batch':
+                # ✅ 셔플 추가
+                indices = np.arange(m)
+                np.random.shuffle(indices)
+                X_shuffled = X[indices]
+                y_shuffled = y[indices]
+
                 all_a_lists, _ = forward_propagation(self.weights, X)
                 finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lam)
                 self.update_weights(finalized_D)
@@ -113,7 +119,6 @@ def stratified_k_fold_split(X, y, k=5):
         folds.append((train_df, test_df))
     return folds
 
-# === mini-batch ===
 
 # === numerical descent ===
 
@@ -127,18 +132,23 @@ def my_f1_score(y_true, y_pred):
     fp = np.sum((y_true == 0) & (y_pred == 1))
     fn = np.sum((y_true == 1) & (y_pred == 0))
 
-    if tp + fp == 0 or tp + fn == 0:
+    if tp == 0:
+        return 0.0  # 예측된 positive가 전혀 없거나, 실제 positive가 없으면 f1은 0
+
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+    if precision + recall == 0:
         return 0.0
 
-    precision = tp / (tp + fp)
-    recall = tp / (tp + fn)
     return 2 * (precision * recall) / (precision + recall)
 
+
 # === Plot Learning Curve ===
-def plot_best_learning_curve(results, dataset_name, metric='f1'):
-    best_key = max(results, key=lambda k: results[k][metric])
+def plot_best_learning_curve(results, dataset_name, save_folder):
+    # ✅ 가장 낮은 cost를 가진 모델 선택
+    best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])
     best_info = results[best_key]
-    
     model = best_info['model']
     hidden_layer = best_info['hidden']
     lam = best_info['lam']
@@ -146,20 +156,23 @@ def plot_best_learning_curve(results, dataset_name, metric='f1'):
     os.makedirs("evaluation", exist_ok=True)
     plt.figure()
     plt.plot(model.cost_history, marker='o')
-    total_neurons = sum(hidden_layer)
-    title = f"{dataset_name} BEST Learning Curve\nλ={lam}, Layers={len(hidden_layer)}, Neurons={total_neurons}"
+
+    # ✅ 제목에 hidden layer를 리스트 형태로 출력
+    title = f"{dataset_name} BEST Learning Curve\nλ={lam}, Hidden={hidden_layer}"
     plt.title(title, fontsize=12)
     plt.xlabel("Epoch")
-    plt.ylabel("Cost")
+    plt.ylabel("Cost (J)")
     plt.grid(True)
     plt.tight_layout()
-    filename = f"evaluation/{dataset_name.lower()}_best_curve.png"
+    
+    filename = f"{save_folder}/{dataset_name.lower()}_best_curve.png"
     plt.savefig(filename)
     print(f"🌟 Saved best learning curve: {filename}")
     plt.close()
 
+
 # === Save Metrics Table ===
-def save_metrics_table(results_by_dataset):
+def save_metrics_table(results_by_dataset, save_folder):
     os.makedirs("evaluation", exist_ok=True)
     for dataset_name, dataset_results in results_by_dataset.items():
         fig, ax = plt.subplots()
@@ -193,7 +206,7 @@ def save_metrics_table(results_by_dataset):
         table.scale(1.1, 1.6)
         plt.title(f"{dataset_name} Model Performance", fontweight='bold')
         plt.tight_layout()
-        filename = f"evaluation/{dataset_name.lower()}_table.png"
+        filename = f"{save_folder}/{dataset_name.lower()}_table.png"
         plt.savefig(filename)
         print(f"📋 Saved metrics table: {filename}")
         plt.close()
@@ -204,13 +217,13 @@ def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lam = [0.25, 10]
-    hidden_layers = [[8, 6], [10, 10, 10]]
+    lam = [0.25, 0.5]
+    hidden_layers = [[8, 6], [8, 6, 4], [4]]
     
     alpha = 0.01
     epochs = 100
     batch_size = 16         # 🔹 원하는 배치 사이즈
-    mode = "mini-batch"     # 🔹 또는 "batch"
+    mode = "batch"     # 🔹 "mini-batch" 또는 "batch"
 
     dataset_name = DATASET_NAME
     results = {}
@@ -255,10 +268,10 @@ def main():
     # 이후 저장 및 시각화는 그대로
 
     # 📋 저장: 테이블 이미지로
-    save_metrics_table({dataset_name: results})
+    save_metrics_table({dataset_name: results}, "evaluation")
 
     # 🌟 가장 좋은 모델 하나에 대해 학습곡선 저장
-    plot_best_learning_curve(results, dataset_name, metric='f1')  # 또는 metric='acc'
+    plot_best_learning_curve(results, dataset_name, "evaluation")
 
     # 📊 판다스 DataFrame으로 저장
     records = []
@@ -270,8 +283,6 @@ def main():
             "Accuracy": val['acc'],
             "F1 Score": val['f1']
         })
-    results_df = pd.DataFrame(records)
-    results_df.to_csv(f"evaluation/{dataset_name.lower()}_results.csv", index=False)
     print(f"✅ Saved DataFrame to evaluation/{dataset_name.lower()}_results.csv")
 
 
