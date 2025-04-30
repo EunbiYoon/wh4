@@ -8,7 +8,6 @@ from sklearn.compose import ColumnTransformer
 from sklearn.metrics import accuracy_score, f1_score
 from propagation import backpropagation, forward_propagation, cost_function
 
-
 # === Neural Network Class ===
 class NeuralNetwork:
     def __init__(self, layer_sizes, alpha=0.01, lam=0.0):
@@ -95,8 +94,8 @@ def save_metrics_table_as_image(results_by_dataset):
         cell_data = []
         for key, val in dataset_results.items():
             layer_idx = int(key.split('_')[0][1:]) - 1
-            hidden_layer = hidden_layers_list[layer_idx]
-            lam = lam_list[layer_idx]
+            hidden_layer = hidden_layers_list[layer_idx // len(lambda_reg_list)]
+            lam = lambda_reg_list[layer_idx % len(lambda_reg_list)]
             cell_data.append([
                 str(hidden_layer),
                 f"{lam:.2f}",
@@ -116,38 +115,46 @@ def save_metrics_table_as_image(results_by_dataset):
 # === Main Execution ===
 if __name__ == "__main__":
     os.makedirs("learning_curve", exist_ok=True)
-    hidden_layers_list = [[4, 4, 4], [2, 4, 6], [2], [6], [2, 4, 2], [6, 6, 6]]
-    lam_list = [0.01, 0.02, 0.03, 0.1, 0.2, 1]
+    hidden_layers_list = [[2], [4, 4, 4], [6, 6, 6, 6]]
+    lambda_reg_list = [0.01, 0.1]
     alpha = 0.1
     epochs = 100
-    results_by_dataset = {"WDBC": {}, "Loan": {}}
-    results_with_model = {}
-    X_wdbc, y_wdbc = load_wdbc_dataset("wdbc.csv")
-    X_loan, y_loan = load_loan_dataset("loan.csv")
-    for i, (hidden_layer, lam) in enumerate(zip(hidden_layers_list, lam_list)):
-        for dataset_name, (X, y) in [("WDBC", (X_wdbc, y_wdbc)), ("Loan", (X_loan, y_loan))]:
-            print(f"\n📘 {dataset_name}: hidden={hidden_layer}, λ={lam}")
-            model = NeuralNetwork([X.shape[1]] + hidden_layer + [1], alpha=alpha, lam=lam)
-            model.fit(X, y, epochs=epochs)
-            y_pred = (model.predict(X) >= 0.5).astype(int).ravel()
-            y_true = y.ravel()
-            acc = accuracy_score(y_true, y_pred)
-            f1 = f1_score(y_true, y_pred, zero_division=1)
-            config_name = f"h{i+1}_λ{lam}"
-            results_by_dataset[dataset_name][config_name] = {"acc": acc, "f1": f1}
-            results_with_model[f"{dataset_name}_{config_name}"] = {
-                "model": model,
-                "dataset_name": dataset_name,
-                "acc": acc,
-                "f1": f1
-            }
-    for dataset in ["WDBC", "Loan"]:
-        filtered = {k: v for k, v in results_with_model.items() if v['dataset_name'] == dataset}
+
+    for dataset_name, (X, y) in {"WDBC": load_wdbc_dataset("wdbc.csv"), "Loan": load_loan_dataset("loan.csv")}.items():
+        results_by_dataset = {dataset_name: {}}
+        results_with_model = {}
+        config_idx = 0
+
+        for i, hidden_layer in enumerate(hidden_layers_list):
+            for j, lam in enumerate(lambda_reg_list):
+                print(f"\n📘 {dataset_name}: hidden={hidden_layer}, λ={lam}")
+                model = NeuralNetwork([X.shape[1]] + hidden_layer + [1], alpha=alpha, lam=lam)
+                model.fit(X, y, epochs=epochs)
+
+                y_pred = (model.predict(X) >= 0.5).astype(int).ravel()
+                y_true = y.ravel()
+                acc = accuracy_score(y_true, y_pred)
+                f1 = f1_score(y_true, y_pred, zero_division=1)
+
+                config_name = f"h{config_idx+1}_λ{lam}"
+                results_by_dataset[dataset_name][config_name] = {"acc": acc, "f1": f1}
+                results_with_model[f"{dataset_name}_{config_name}"] = {
+                    "model": model,
+                    "dataset_name": dataset_name,
+                    "acc": acc,
+                    "f1": f1
+                }
+                config_idx += 1
+
+        # === Best model (per dataset)
+        filtered = {k: v for k, v in results_with_model.items() if v['dataset_name'] == dataset_name}
         best_key = max(filtered.items(), key=lambda x: (x[1]['f1'], x[1]['acc']))[0]
         best_model = results_with_model[best_key]["model"]
         layer_idx = int(best_key.split('_')[1][1:]) - 1
-        best_hidden_layer = hidden_layers_list[layer_idx]
-        best_lam = lam_list[layer_idx]
-        print(f"\n🎯 Best {dataset} Model: {best_key}")
-        plot_learning_curve(best_model, dataset.lower() + "_best", best_hidden_layer, best_lam)
-    save_metrics_table_as_image(results_by_dataset)
+        best_hidden_layer = hidden_layers_list[layer_idx // len(lambda_reg_list)]
+        best_lam = lambda_reg_list[layer_idx % len(lambda_reg_list)]
+        print(f"\n🎯 Best {dataset_name} Model: {best_key}")
+        plot_learning_curve(best_model, dataset_name.lower() + "_best", best_hidden_layer, best_lam)
+
+        # === Save performance table (per dataset)
+        save_metrics_table_as_image(results_by_dataset)
