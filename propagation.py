@@ -80,8 +80,6 @@ def cost_function(pred_y_list, true_y_list, Theta, lambda_reg):
     # J_list, final_J = J+S
     return J_list, cost_no_reg + reg_term
 
-
-
 def blame_delta(Theta, a_list, y):
     Theta = [np.array(theta_i) for theta_i in Theta]
     delta_list = [None] * len(Theta)
@@ -133,7 +131,6 @@ def regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m):
 
     return avg_D_list
 
-
 def backpropagation(Theta, all_a_lists, y, lambda_reg):
     # ✅ 평균 누적용 초기화
     all_D_lists = []
@@ -153,7 +150,6 @@ def backpropagation(Theta, all_a_lists, y, lambda_reg):
     finalized_D = regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m)
     return finalized_D, all_D_lists, all_delta_lists
 
-
 # ========== Main ==========
 def main(Theta, X, y, lambda_reg):
     np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
@@ -171,40 +167,40 @@ def main(Theta, X, y, lambda_reg):
 # ========== Entry Point ==========
 if __name__ == "__main__":
     ######### Example 1
-    lambda_reg = 0
-    Theta = [
-        [[0.4, 0.1], [0.3, 0.2]],
-        [[0.7, 0.5, 0.6]]
-    ]
-    X = [[0.13], [0.42]]
-    y = [[0.9], [0.23]]
+    # lambda_reg = 0
+    # Theta = [
+    #     [[0.4, 0.1], [0.3, 0.2]],
+    #     [[0.7, 0.5, 0.6]]
+    # ]
+    # X = [[0.13], [0.42]]
+    # y = [[0.9], [0.23]]
 
     # ########## Example 2
-    # lambda_reg = 0.250
-    # X = [
-    #     [0.32000, 0.68000],
-    #     [0.83000, 0.02000]
-    # ]
-    # y = [
-    #     [0.75000, 0.98000],
-    #     [0.75000, 0.28000]
-    # ]
-    # Theta = [
-    #     [
-    #         [0.42000, 0.15000, 0.40000],
-    #         [0.72000, 0.10000, 0.54000],
-    #         [0.01000, 0.19000, 0.42000],
-    #         [0.30000, 0.35000, 0.68000]
-    #     ],
-    #     [
-    #         [0.21000, 0.67000, 0.14000, 0.96000, 0.87000],
-    #         [0.87000, 0.42000, 0.20000, 0.32000, 0.89000],
-    #         [0.03000, 0.56000, 0.80000, 0.69000, 0.09000]
-    #     ],
-    #     [
-    #         [0.04000, 0.87000, 0.42000, 0.53000],
-    #         [0.17000, 0.10000, 0.95000, 0.69000]
-    #     ]
-    # ]
+    lambda_reg = 0.250
+    X = [
+        [0.32000, 0.68000],
+        [0.83000, 0.02000]
+    ]
+    y = [
+        [0.75000, 0.98000],
+        [0.75000, 0.28000]
+    ]
+    Theta = [
+        [
+            [0.42000, 0.15000, 0.40000],
+            [0.72000, 0.10000, 0.54000],
+            [0.01000, 0.19000, 0.42000],
+            [0.30000, 0.35000, 0.68000]
+        ],
+        [
+            [0.21000, 0.67000, 0.14000, 0.96000, 0.87000],
+            [0.87000, 0.42000, 0.20000, 0.32000, 0.89000],
+            [0.03000, 0.56000, 0.80000, 0.69000, 0.09000]
+        ],
+        [
+            [0.04000, 0.87000, 0.42000, 0.53000],
+            [0.17000, 0.10000, 0.95000, 0.69000]
+        ]
+    ]
 
     main(Theta, X, y, lambda_reg)
