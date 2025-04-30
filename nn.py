@@ -30,17 +30,41 @@ class NeuralNetwork:
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * gradients[i]
 
-    def fit(self, X, y, epochs=100, fold_index=None):
+    def fit(self, X, y, epochs=100, batch_size=32, fold_index=None, mode='batch'):
+        m = X.shape[0]
         for epoch in range(epochs):
+            if mode == 'mini-batch':
+                indices = np.arange(m)
+                np.random.shuffle(indices)
+                X_shuffled = X[indices]
+                y_shuffled = y[indices]
+
+                for start in range(0, m, batch_size):
+                    end = start + batch_size
+                    X_batch = X_shuffled[start:end]
+                    y_batch = y_shuffled[start:end]
+
+                    all_a_lists, _ = forward_propagation(self.weights, X_batch)
+                    finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y_batch, self.lam)
+                    self.update_weights(finalized_D)
+
+            elif mode == 'batch':
+                all_a_lists, _ = forward_propagation(self.weights, X)
+                finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lam)
+                self.update_weights(finalized_D)
+
+            else:
+                raise ValueError("Mode must be either 'batch' or 'mini-batch'")
+
+            # === Cost logging (epoch 단위로)
             all_a_lists, _ = forward_propagation(self.weights, X)
-            finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lam)
-            self.update_weights(finalized_D)
             pred_ys = [a_list[-1] for a_list in all_a_lists]
             _, final_cost = cost_function(pred_ys, y, self.weights, self.lam)
             self.cost_history.append(final_cost)
             if epoch % 10 == 0:
                 prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
                 print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.4f}")
+
 
     def predict(self, X):
         all_a_lists, _ = forward_propagation(self.weights, X)
@@ -180,13 +204,15 @@ def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lam = [0.25, 10] # adjustable lambda
-    hidden_layers = [[8, 6], [10, 10, 10]] # adjustable neuron, layer
+    lam = [0.25, 10]
+    hidden_layers = [[8, 6], [10, 10, 10]]
     
-    alpha = 0.01 # learning rate
-    epochs = 100 # stopping criteria
-    dataset_name = DATASET_NAME # dataset
+    alpha = 0.01
+    epochs = 100
+    batch_size = 16         # 🔹 원하는 배치 사이즈
+    mode = "mini-batch"     # 🔹 또는 "batch"
 
+    dataset_name = DATASET_NAME
     results = {}
 
     for h_idx, hidden in enumerate(hidden_layers):
@@ -197,8 +223,21 @@ def main():
                 X_test = test_df.drop(columns=['label']).values
                 y_test = test_df['label'].values.astype(int).ravel()
 
-                model = NeuralNetwork(layer_sizes=[X_train.shape[1], *hidden, 1], alpha=alpha, lam=l)
-                model.fit(X_train, y_train, epochs=epochs, fold_index=i)
+                model = NeuralNetwork(
+                    layer_sizes=[X_train.shape[1], *hidden, 1],
+                    alpha=alpha,
+                    lam=l
+                )
+
+                # 🔽 mode, batch_size 함께 전달
+                model.fit(
+                    X_train, y_train,
+                    epochs=epochs,
+                    batch_size=batch_size,
+                    fold_index=i,
+                    mode=mode
+                )
+
                 preds = model.predict(X_test)
                 preds_binary = (preds >= 0.5).astype(int).ravel()
 
@@ -212,6 +251,8 @@ def main():
                     "f1": f1,
                     "model": model
                 }
+
+    # 이후 저장 및 시각화는 그대로
 
     # 📋 저장: 테이블 이미지로
     save_metrics_table({dataset_name: results})
