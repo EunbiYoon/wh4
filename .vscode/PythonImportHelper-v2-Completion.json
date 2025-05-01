@@ -232,7 +232,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DATASET_NAME = \"raisin\"  # Name of the dataset\nM_SIZE = 50            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"",
+        "peekOfCode": "DATASET_NAME = \"titanic\"  # Name of the dataset\nM_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 64\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"",
         "detail": "nn",
         "documentation": {}
     },
@@ -241,7 +241,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "M_SIZE = 50            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:",
+        "peekOfCode": "M_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 64\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:",
         "detail": "nn",
         "documentation": {}
     },
@@ -250,7 +250,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")",
+        "peekOfCode": "DEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 64\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")",
         "detail": "nn",
         "documentation": {}
     },
@@ -259,7 +259,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "TRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===",
+        "peekOfCode": "TRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 64\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===",
         "detail": "nn",
         "documentation": {}
     },
@@ -268,7 +268,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "BATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===\nclass NeuralNetwork:",
+        "peekOfCode": "BATCH_SIZE = 64\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===\nclass NeuralNetwork:",
         "detail": "nn",
         "documentation": {}
     },

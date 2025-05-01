@@ -8,11 +8,11 @@ from propagation import backpropagation_vectorized, forward_propagation, cost_fu
 import debug_text
 
 # === Setting ===
-DATASET_NAME = "raisin"  # Name of the dataset
-M_SIZE = 50            # m for stopping criterion
+DATASET_NAME = "titanic"  # Name of the dataset
+M_SIZE = 300            # m for stopping criterion
 DEBUG_MODE = True         # If True, run debugging routine at the end
 TRAIN_MODE = "mini-batch"    # Choose "batch" or "mini-batch"
-BATCH_SIZE = 32
+BATCH_SIZE = 64
 
 # === FILE_NAME Setting ===
 if TRAIN_MODE=="batch":
