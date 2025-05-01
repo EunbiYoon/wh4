@@ -1,0 +1,412 @@
+[
+    {
+        "label": "numpy",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "numpy",
+        "description": "numpy",
+        "detail": "numpy",
+        "documentation": {}
+    },
+    {
+        "label": "forward_propagation",
+        "importPath": "propagation",
+        "description": "propagation",
+        "isExtraImport": true,
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "cost_function",
+        "importPath": "propagation",
+        "description": "propagation",
+        "isExtraImport": true,
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "backpropagation",
+        "importPath": "propagation",
+        "description": "propagation",
+        "isExtraImport": true,
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "forward_propagation",
+        "importPath": "propagation",
+        "description": "propagation",
+        "isExtraImport": true,
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "cost_function",
+        "importPath": "propagation",
+        "description": "propagation",
+        "isExtraImport": true,
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "NeuralNetwork",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "load_dataset",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "stratified_k_fold_split",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "my_accuracy",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "my_f1_score",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "save_metrics_table",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "plot_best_learning_curve",
+        "importPath": "nn",
+        "description": "nn",
+        "isExtraImport": true,
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "os",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
+        "documentation": {}
+    },
+    {
+        "label": "pandas",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.pyplot",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.pyplot",
+        "description": "matplotlib.pyplot",
+        "detail": "matplotlib.pyplot",
+        "documentation": {}
+    },
+    {
+        "label": "OneHotEncoder",
+        "importPath": "sklearn.preprocessing",
+        "description": "sklearn.preprocessing",
+        "isExtraImport": true,
+        "detail": "sklearn.preprocessing",
+        "documentation": {}
+    },
+    {
+        "label": "debug_text",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "debug_text",
+        "description": "debug_text",
+        "detail": "debug_text",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "debug_text",
+        "description": "debug_text",
+        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D): \n    with open(\"backprop_debug.txt\", \"w\", encoding=\"utf-8\") as f:\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")\n        structure = [len(X[0])] + [len(t) for t in Theta]\n        println(\"Initializing the network with the following structure (number of neurons per layer): \" + str(structure).replace(\",\", \"\") + \"\\n\")\n        for i, theta in enumerate(Theta):\n            println(f\"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):\")",
+        "detail": "debug_text",
+        "documentation": {}
+    },
+    {
+        "label": "flatten_weights",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "unflatten_weights",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights\n# === Cost Function Wrapper ===\ndef make_cost_function(X, y, shapes, lambda_reg):",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "make_cost_function",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def make_cost_function(X, y, shapes, lambda_reg):\n    def J(theta_flat):\n        weights = unflatten_weights(theta_flat, shapes)\n        all_a_lists, _ = forward_propagation(weights, X)\n        pred_y_list = [a_list[-1] for a_list in all_a_lists]\n        _, final_cost = cost_function(pred_y_list, y, weights, lambda_reg)\n        return final_cost\n    return J\n# === Numerical Gradient Computation ===\ndef compute_numerical_gradient(J, theta, epsilon=1e-4):",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "compute_numerical_gradient",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def compute_numerical_gradient(J, theta, epsilon=1e-4):\n    num_grad = np.zeros_like(theta)\n    for i in range(len(theta)):\n        theta_plus = np.copy(theta)\n        theta_minus = np.copy(theta)\n        theta_plus[i] += epsilon\n        theta_minus[i] -= epsilon\n        num_grad[i] = (J(theta_plus) - J(theta_minus)) / (2 * epsilon)\n    return num_grad\n# === Main Entry for Numerical Gradient Update ===",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "numerical_gradient_update",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def numerical_gradient_update(weights, X, y, lambda_reg, alpha):\n    shapes = [w.shape for w in weights]\n    theta_flat = flatten_weights(weights)\n    J = make_cost_function(X, y, shapes, lambda_reg)\n    grad_flat = compute_numerical_gradient(J, theta_flat)\n    grad_structured = unflatten_weights(grad_flat, shapes)\n    # Update weights manually here and return new ones\n    updated_weights = [w - alpha * g for w, g in zip(weights, grad_structured)]\n    return updated_weights\ndef main():",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def main():\n    X, y = load_dataset()\n    folds = stratified_k_fold_split(X, y, k=5)\n    lambda_reg_list = [0.25, 0.5]\n    hidden_layers = [[8, 6], [8, 6, 4], [4]]\n    alpha = 0.01\n    epochs = 100\n    batch_size = 16\n    mode = \"mini-batch\"\n    dataset_name = DATASET_NAME",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "DATASET_NAME",
+        "kind": 5,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "DATASET_NAME = \"wdbc\"\n# === Flatten and Unflatten Functions ===\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "NeuralNetwork",
+        "kind": 6,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "class NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes  # Number of neurons in each layer\n        self.alpha = alpha              # Learning rate\n        self.lambda_reg = lambda_reg                  # Regularization parameter\n        self.weights = self.initialize_weights()  # Initialize weights\n        self.cost_history = []          # Store cost at each epoch\n    # Initialize weights using He initialization\n    def initialize_weights(self):\n        weights = []",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "load_dataset",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def load_dataset():\n    DATA_PATH = f\"datasets/{DATASET_NAME}.csv\"\n    df = pd.read_csv(DATA_PATH)\n    if 'label' not in df.columns:\n        raise ValueError(\"Dataset must contain a 'label' column.\")\n    y = df['label'].copy()\n    X = df.drop(columns=['label'])\n    # Normalize numeric columns and apply one-hot encoding to categorical columns\n    for col in X.columns:\n        if col.endswith(\"_num\"):",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "stratified_k_fold_split",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def stratified_k_fold_split(X, y, k=5):\n    df = pd.DataFrame(X)\n    df['label'] = y.ravel()\n    class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)\n    class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)\n    folds = []\n    for i in range(k):\n        c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]\n        c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]\n        test_df = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "my_accuracy",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def my_accuracy(y_true, y_pred):\n    correct = np.sum(y_true == y_pred)\n    return correct / len(y_true)\n# === F1 Score Calculation ===\ndef my_f1_score(y_true, y_pred):\n    tp = np.sum((y_true == 1) & (y_pred == 1))\n    fp = np.sum((y_true == 0) & (y_pred == 1))\n    fn = np.sum((y_true == 1) & (y_pred == 0))\n    if tp == 0:\n        return 0.0",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "my_f1_score",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def my_f1_score(y_true, y_pred):\n    tp = np.sum((y_true == 1) & (y_pred == 1))\n    fp = np.sum((y_true == 0) & (y_pred == 1))\n    fn = np.sum((y_true == 1) & (y_pred == 0))\n    if tp == 0:\n        return 0.0\n    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0\n    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0\n    if precision + recall == 0:\n        return 0.0",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "plot_best_learning_curve",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def plot_best_learning_curve(results, dataset_name, save_folder):\n    best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])\n    best_info = results[best_key]\n    model = best_info['model']\n    hidden_layer = best_info['hidden']\n    lambda_reg = best_info['lambda_reg']\n    os.makedirs(\"evaluation\", exist_ok=True)\n    plt.figure()\n    plt.plot(model.cost_history, marker='o')\n    title = f\"{dataset_name} BEST Learning Curve\\nλ={lambda_reg}, Hidden={hidden_layer}\"",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "save_metrics_table",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def save_metrics_table(results_by_dataset, save_folder):\n    os.makedirs(\"evaluation\", exist_ok=True)\n    for dataset_name, dataset_results in results_by_dataset.items():\n        fig, ax = plt.subplots()\n        ax.axis('off')\n        col_labels = [\"Layer & Neuron\", \"Lambda\", \"Avg Accuracy\", \"Avg F1 Score\"]\n        cell_data = []\n        grouped = {}\n        for key, val in dataset_results.items():\n            h = tuple(val['hidden'])",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "def main():\n    X, y = load_dataset()\n    folds = stratified_k_fold_split(X, y, k=5)\n    lambda_reg_list = [0.25, 0.5]  # Regularization values\n    hidden_layers = [[8, 6], [8, 6, 4], [4]]  # Different architectures\n    alpha = 0.01\n    epochs = 100\n    batch_size = 16\n    mode = \"batch\"\n    dataset_name = DATASET_NAME",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "DATASET_NAME",
+        "kind": 5,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "DATASET_NAME = \"wdbc\"\n# === Neural Network Class ===\nclass NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes  # Number of neurons in each layer\n        self.alpha = alpha              # Learning rate\n        self.lambda_reg = lambda_reg                  # Regularization parameter\n        self.weights = self.initialize_weights()  # Initialize weights\n        self.cost_history = []          # Store cost at each epoch\n    # Initialize weights using He initialization",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "add_bias",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def add_bias(x):\n    x = np.array(x)\n    return np.insert(x, 0, 1, axis=0)\ndef input_vector(X):\n    X = np.array(X)\n    result = []\n    for x in X:\n        x = np.array(x).reshape(-1, 1)  # (n,1)로 변환\n        x = add_bias(x)                 # 맨 앞에 bias(1) 추가\n        result.append(x)",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "input_vector",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def input_vector(X):\n    X = np.array(X)\n    result = []\n    for x in X:\n        x = np.array(x).reshape(-1, 1)  # (n,1)로 변환\n        x = add_bias(x)                 # 맨 앞에 bias(1) 추가\n        result.append(x)\n    return result\ndef sigmoid(z):\n    return 1 / (1 + np.exp(-z))",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "sigmoid",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def sigmoid(z):\n    return 1 / (1 + np.exp(-z))\ndef get_activation(Theta_i, x_i):\n    Theta_i = np.array(Theta_i)\n    z = Theta_i @ x_i\n    a = sigmoid(z)\n    return z, a\ndef forward_propagation(Theta, X):\n    x_list = input_vector(X)\n    all_a_lists = []  # 모든 instance의 레이어별 a값 저장 리스트",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "get_activation",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def get_activation(Theta_i, x_i):\n    Theta_i = np.array(Theta_i)\n    z = Theta_i @ x_i\n    a = sigmoid(z)\n    return z, a\ndef forward_propagation(Theta, X):\n    x_list = input_vector(X)\n    all_a_lists = []  # 모든 instance의 레이어별 a값 저장 리스트\n    all_z_lists = []  # 모든 instance의 레이어별 z값 저장 리스트\n    for i, x_i in enumerate(x_list):",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "forward_propagation",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def forward_propagation(Theta, X):\n    x_list = input_vector(X)\n    all_a_lists = []  # 모든 instance의 레이어별 a값 저장 리스트\n    all_z_lists = []  # 모든 instance의 레이어별 z값 저장 리스트\n    for i, x_i in enumerate(x_list):\n        a_list = []  # 하나의 인스턴스에 대해 레이어별 a값 저장\n        z_list = []  # 하나의 인스턴스에 대해 레이어별 z값 저장\n        a_list.append(x_i)  # input layer (bias 포함)\n        for layer_idx, Theta_i in enumerate(Theta):\n            z, a = get_activation(Theta_i, x_i)",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "log_func",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def log_func(x):\n    return np.log(x)\ndef cost_function(pred_y_list, true_y_list, Theta, lambda_reg):\n    J_list = []\n    for pred_y, true_y in zip(pred_y_list, true_y_list):\n        pred_y = np.array(pred_y).reshape(-1, 1)\n        true_y = np.array(true_y).reshape(-1, 1)\n        # (행렬 버전: J = - [ yᵗ log(f) + (1 - y)ᵗ log(1 - f) ])\n        cost = -(true_y.T @ np.log(pred_y) + (1 - true_y).T @ np.log(1 - pred_y))\n        J_list.append(cost.item())",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "cost_function",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def cost_function(pred_y_list, true_y_list, Theta, lambda_reg):\n    J_list = []\n    for pred_y, true_y in zip(pred_y_list, true_y_list):\n        pred_y = np.array(pred_y).reshape(-1, 1)\n        true_y = np.array(true_y).reshape(-1, 1)\n        # (행렬 버전: J = - [ yᵗ log(f) + (1 - y)ᵗ log(1 - f) ])\n        cost = -(true_y.T @ np.log(pred_y) + (1 - true_y).T @ np.log(1 - pred_y))\n        J_list.append(cost.item())\n    m = len(true_y_list)\n    # J = J/n",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "blame_delta",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def blame_delta(Theta, a_list, y):\n    Theta = [np.array(theta_i) for theta_i in Theta]\n    delta_list = [None] * len(Theta)\n    for layer_idx in reversed(range(len(Theta))):\n        Theta_i = Theta[layer_idx]\n        if layer_idx == len(Theta) - 1:\n            # 출력층\n            delta = a_list[layer_idx+1] - np.array(y).reshape(-1, 1)\n            delta_list[layer_idx] = delta\n        else:",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "gradient_theta",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def gradient_theta(delta_list, a_list):\n    D_list = []\n    # 🔥 순방향으로 순회 (reversed 제거)\n    for i in range(len(delta_list)):\n        delta = delta_list[i]\n        a = a_list[i]\n        grad = delta @ a.T\n        D_list.append(grad)\n    return D_list\ndef regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m):",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "regularized_gradient_theta",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def regularized_gradient_theta(all_D_lists, Theta, lambda_reg, m):\n    Theta = [np.array(theta_i) for theta_i in Theta]\n    num_layers = len(Theta)\n    avg_D_list = []\n    for layer_idx in range(num_layers):\n        # ⬇ 해당 레이어에 대해 모든 인스턴스의 gradient 누적 합산\n        sum_grad = sum(instance_D[layer_idx] for instance_D in all_D_lists)\n        # ⬇ 평균 계산\n        avg_grad = sum_grad / m\n        # ⬇ 정규화 (bias 제외하고)",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "backpropagation",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def backpropagation(Theta, all_a_lists, y, lambda_reg):\n    # ✅ 평균 누적용 초기화\n    all_D_lists = []\n    all_delta_lists = []\n    average_D_lists=[]\n    for i, a_list in enumerate(all_a_lists):\n        # a 만큼 detla 값 반복해서 쌓기\n        delta_list = blame_delta(Theta, a_list, y[i])\n        all_delta_lists.append(delta_list)\n        # a 만큼 D 값 반복해서 쌓기",
+        "detail": "propagation",
+        "documentation": {}
+    },
+    {
+        "label": "main",
+        "kind": 2,
+        "importPath": "propagation",
+        "description": "propagation",
+        "peekOfCode": "def main(Theta, X, y, lambda_reg):\n    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n    # forward propagation \n    all_a_lists, all_z_lists = forward_propagation(Theta, X)\n    # cost function \n    pred_y_list = [a_list[-1] for a_list in all_a_lists]\n    true_y_list = y\n    J_list, final_cost = cost_function(pred_y_list, true_y_list, Theta, lambda_reg)\n    finalized_D, D_list, delta_list = backpropagation(Theta, all_a_lists, y, lambda_reg)\n    debug_text.main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D)",
+        "detail": "propagation",
+        "documentation": {}
+    }
+]

@@ -30,7 +30,7 @@ class NeuralNetwork:
     # Update weights using gradients
     def update_weights(self, gradients):
         for i in range(len(self.weights)):
-            self.weights[i] -= self.alpha * gradients[i]
+            self.weights[i] = self.weights[i] - self.alpha * gradients[i]
 
     # Fit the model using either batch or mini-batch gradient descent
     def fit(self, X, y, epochs=100, batch_size=32, fold_index=None, mode='batch'):
@@ -62,7 +62,6 @@ class NeuralNetwork:
             else:
                 raise ValueError("Mode must be either 'batch' or 'mini-batch')")
 
-            all_a_lists, _ = forward_propagation(self.weights, X)
             pred_ys = [a_list[-1] for a_list in all_a_lists]
             _, final_cost = cost_function(pred_ys, y, self.weights, self.lambda_reg)
             self.cost_history.append(final_cost)

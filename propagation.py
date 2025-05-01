@@ -72,7 +72,7 @@ def cost_function(pred_y_list, true_y_list, Theta, lambda_reg):
     reg_term = 0
     for theta in Theta:
         theta = np.array(theta)
-        # S = theta^2
+        # S = theta^2 -> L2
         reg_term += np.sum(theta[:, 1:] ** 2)
     # S = S * (lambda / 2m)
     reg_term = reg_term* (lambda_reg / (2 * m))
