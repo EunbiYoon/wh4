@@ -1,6 +1,6 @@
 # === Vectorized Neural Network Implementation ===
 import numpy as np
-import debug.debug_text as debug_text
+import debug_text as debug_text
 
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
@@ -13,7 +13,7 @@ def add_bias(X):
 
 def forward_propagation(Theta, X):
     Theta = [np.array(t) for t in Theta]
-    A = [add_bias(np.array(X))]
+    A = [add_bias(np.array(X))] 
     Z = []
 
     for i, Theta_i in enumerate(Theta):
@@ -21,7 +21,7 @@ def forward_propagation(Theta, X):
         A_i = sigmoid(Z_i)
         Z.append(Z_i)
         if i < len(Theta) - 1:
-            A_i = add_bias(A_i)
+            A_i = add_bias(A_i) # add bias in hidden layer only
         A.append(A_i)
 
     # Convert to per-instance format for compatibility
@@ -37,7 +37,8 @@ def cost_function(A_final, Y, Theta, lambda_reg):
     reg_term = 0
     for theta in Theta:
         theta = np.array(theta)
-        reg_term += np.sum(theta[:, 1:] ** 2)
+        # remove bias -> [:, 1:]
+        reg_term += np.sum(theta[:, 1:] ** 2) 
     reg_term = reg_term * (lambda_reg / (2 * m))
 
     return cost, cost + reg_term
@@ -55,11 +56,12 @@ def backpropagation_vectorized(Theta, A, Z, Y, lambda_reg):
             delta = (delta @ Theta[i][:, 1:]) * sigmoid_gradient(Z[i - 1])
 
     for i in range(len(Theta)):
+        # remove bias -> [:, 1:]
         gradients[i][:, 1:] += (lambda_reg / m) * Theta[i][:, 1:]
 
     return gradients
 
-def main(Theta, X, y, lambda_reg):
+def run_debug(Theta, X, y, lambda_reg):
     np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
     A, Z, all_a_lists, all_z_lists = forward_propagation(Theta, X)
     pred_y_list = [a_list[-1] for a_list in all_a_lists]
@@ -91,44 +93,44 @@ def main(Theta, X, y, lambda_reg):
 
 if __name__ == "__main__":
     ### Example 1
-    # lambda_reg = 0
-    # Theta = [
-    #     [[0.4, 0.1], [0.3, 0.2]],
-    #     [[0.7, 0.5, 0.6]]
-    # ]
-    # X = [[0.13], [0.42]]
-    # y = [[0.9], [0.23]]
+    lambda_reg = 0
+    Theta = [
+        [[0.4, 0.1], [0.3, 0.2]],
+        [[0.7, 0.5, 0.6]]
+    ]
+    X = [[0.13], [0.42]]
+    y = [[0.9], [0.23]]
 
     ### Example 2
-    lambda_reg = 0.250
-    X = [
-        [0.32000, 0.68000],
-        [0.83000, 0.02000]
-    ]
-    y = [
-        [0.75000, 0.98000],
-        [0.75000, 0.28000]
-    ]
-    Theta = [
-        [
-            [0.42000, 0.15000, 0.40000],
-            [0.72000, 0.10000, 0.54000],
-            [0.01000, 0.19000, 0.42000],
-            [0.30000, 0.35000, 0.68000]
-        ],
-        [
-            [0.21000, 0.67000, 0.14000, 0.96000, 0.87000],
-            [0.87000, 0.42000, 0.20000, 0.32000, 0.89000],
-            [0.03000, 0.56000, 0.80000, 0.69000, 0.09000]
-        ],
-        [
-            [0.04000, 0.87000, 0.42000, 0.53000],
-            [0.17000, 0.10000, 0.95000, 0.69000]
-        ]
-    ]
+    # lambda_reg = 0.250
+    # X = [
+    #     [0.32000, 0.68000],
+    #     [0.83000, 0.02000]
+    # ]
+    # y = [
+    #     [0.75000, 0.98000],
+    #     [0.75000, 0.28000]
+    # ]
+    # Theta = [
+    #     [
+    #         [0.42000, 0.15000, 0.40000],
+    #         [0.72000, 0.10000, 0.54000],
+    #         [0.01000, 0.19000, 0.42000],
+    #         [0.30000, 0.35000, 0.68000]
+    #     ],
+    #     [
+    #         [0.21000, 0.67000, 0.14000, 0.96000, 0.87000],
+    #         [0.87000, 0.42000, 0.20000, 0.32000, 0.89000],
+    #         [0.03000, 0.56000, 0.80000, 0.69000, 0.09000]
+    #     ],
+    #     [
+    #         [0.04000, 0.87000, 0.42000, 0.53000],
+    #         [0.17000, 0.10000, 0.95000, 0.69000]
+    #     ]
+    # ]
 
     ### change form 
     Theta = [np.array(t) for t in Theta]
     X = np.array(X)
     y = np.array(y)
-    main(Theta, X, y, lambda_reg)
+    run_debug(Theta, X, y, lambda_reg)

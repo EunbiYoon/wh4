@@ -4,10 +4,12 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
-from propagation import backpropagation_vectorized, forward_propagation, cost_function
+from propagation import backpropagation_vectorized, forward_propagation, cost_function, run_debug
 
-# === Dataset Setting ===
-DATASET_NAME = "loan"
+# === Setting ===
+DATASET_NAME = "raisin"
+M_SIZE = 10
+DEBUG_MODE = True
 
 # === Neural Network Class ===
 class NeuralNetwork:
@@ -33,7 +35,7 @@ class NeuralNetwork:
 
     def fit(self, X, y, batch_size=32, fold_index=None, mode='batch', stopping_J=600):
         m = X.shape[0]
-        epoch = 0
+        m_size = 0
 
         while True:
             if mode == 'mini-batch':
@@ -69,14 +71,14 @@ class NeuralNetwork:
 
             prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
             model_info = f"Hidden={self.layer_sizes[1:-1]}, λ={self.lambda_reg}, dataset={DATASET_NAME}"
-            if epoch % 10 == 0:
-                print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.8f} - {model_info}")
+            if m_size % 10 == 0:
+                print(f"{prefix}Epoch {m_size} - Cost: {final_cost:.8f} - {model_info}")
 
-            if epoch == stopping_J:
-                print(f"{prefix}Stopping at epoch {epoch} - Final Cost J: {final_cost:.8f}")
+            if m_size == stopping_J:
+                print(f"{prefix}Stopping at m_size {m_size} - Final Cost J: {final_cost:.8f}")
                 break
 
-            epoch += 1
+            m_size += 1
 
     def predict(self, X):
         A, _, _, _ = forward_propagation(self.weights, X)
@@ -157,7 +159,7 @@ def plot_best_learning_curve(results, dataset_name, save_folder):
 
     os.makedirs("evaluation", exist_ok=True)
 
-    # X축: epoch * train_size
+    # X축: m_size * train_size
     x_vals = [i * train_size for i in range(len(model.cost_history))]
     y_vals = model.cost_history
 
@@ -168,8 +170,8 @@ def plot_best_learning_curve(results, dataset_name, save_folder):
 
     plt.figure()
     plt.plot(x_vals, y_vals, marker='o')
-    plt.title(f"{dataset_name} BEST Learning Curve\n{info_text}", fontsize=11)
-    plt.xlabel("Training Instances (Epoch x Train Set)")
+    plt.title(f"{dataset_name.capitalize()} BEST Learning Curve\n{info_text}", fontsize=11)
+    plt.xlabel("Training Instances (m x Train Set)")
     plt.ylabel("Cost (J)")
     plt.grid(True)
     plt.tight_layout()
@@ -240,12 +242,12 @@ def save_metrics_table(results_by_dataset, save_folder):
         plt.close()
 
 
-# === Main Execution Function ===
-def main():
+# === Create Debug File Function ===
+def neural_network():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lambda_reg_list = [0.1, 0.01]  # Regularization values
+    lambda_reg_list = [0.001, 0.0001, 0.00001, 0.000001]  # Regularization values
     hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures
     alpha = 0.1
     batch_size = 32
@@ -273,7 +275,7 @@ def main():
                     batch_size=batch_size,
                     fold_index=i,
                     mode=mode,
-                    stopping_J=600  # ← 추가된 인자
+                    stopping_J=M_SIZE  # ← 추가된 인자
                 )
 
                 preds = model.predict(X_test)
@@ -306,5 +308,9 @@ def main():
         })
     print(f"✅ Saved DataFrame to evaluation/{dataset_name.lower()}_results.csv")
 
+    if DEBUG_MODE==True:    
+        run_debug(model.weights, X_train, y_train, lambda_reg)
+
+
 if __name__ == "__main__":
-    main()
+    neural_network()
