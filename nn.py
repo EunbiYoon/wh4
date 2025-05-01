@@ -4,88 +4,116 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
-from propagation import backpropagation_vectorized, forward_propagation, cost_function, run_debug
+from propagation import backpropagation_vectorized, forward_propagation, cost_function
+import debug_text
 
 # === Setting ===
-DATASET_NAME = "raisin"
-M_SIZE = 10
-DEBUG_MODE = True
+DATASET_NAME = "wdbc"  # Name of the dataset
+M_SIZE = 300            # m for stopping criterion
+DEBUG_MODE = True         # If True, run debugging routine at the end
+TRAIN_MODE = "batch"    # Choose "batch" or "mini-batch"
+
+# === FILE_NAME Setting ===
+if TRAIN_MODE=="batch":
+    FILE_NAME = DATASET_NAME
+elif TRAIN_MODE=="mini-batch":
+    FILE_NAME = DATASET_NAME+"_minibatch"
+else:
+    print("choose mini-batch or batch in TRAIN_MODE")
 
 # === Neural Network Class ===
 class NeuralNetwork:
     def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):
-        self.layer_sizes = layer_sizes
-        self.alpha = alpha
-        self.lambda_reg = lambda_reg
-        self.weights = self.initialize_weights()
-        self.cost_history = []
+        self.layer_sizes = layer_sizes  # Architecture of the network
+        self.alpha = alpha              # Learning rate
+        self.lambda_reg = lambda_reg    # Regularization parameter
+        self.weights = self.initialize_weights()  # Random weight initialization
+        self.cost_history = []          # Store J value per training set
 
     def initialize_weights(self):
+        # Initialize weights for each layer using uniform distribution
         weights = []
         for i in range(len(self.layer_sizes) - 1):
-            l_in = self.layer_sizes[i] + 1
-            l_out = self.layer_sizes[i + 1]
-            weight = np.random.uniform(-1, 1, size=(l_out, l_in))
+            l_in = self.layer_sizes[i] + 1  # +1 to account for bias unit
+            l_out = self.layer_sizes[i + 1]  # Output layer size
+            weight = np.random.uniform(-1, 1, size=(l_out, l_in))  # Random initialization : random numbers from -1 to +1
             weights.append(weight)
         return weights
 
     def update_weights(self, gradients):
+        # Update weights using gradient descent
         for i in range(len(self.weights)):
             self.weights[i] -= self.alpha * gradients[i]
 
     def fit(self, X, y, batch_size=32, fold_index=None, mode='batch', stopping_J=600):
-        m = X.shape[0]
-        m_size = 0
+        m = X.shape[0]  # Total number of samples
+        m_size = 0      # Epoch counter
 
         while True:
             if mode == 'mini-batch':
+                # Shuffle data
                 indices = np.arange(m)
                 np.random.shuffle(indices)
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
 
+                # Process mini-batches
                 for start in range(0, m, batch_size):
                     end = start + batch_size
                     X_batch = X_shuffled[start:end]
                     y_batch = y_shuffled[start:end]
 
+                    # Forward and backward pass
                     A, Z, _, _ = forward_propagation(self.weights, X_batch)
                     finalized_D = backpropagation_vectorized(self.weights, A, Z, y_batch, self.lambda_reg)
                     self.update_weights(finalized_D)
 
             elif mode == 'batch':
+                # Shuffle data
                 indices = np.arange(m)
                 np.random.shuffle(indices)
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
 
+                # Full batch forward/backward pass
                 A, Z, _, _ = forward_propagation(self.weights, X_shuffled)
                 finalized_D = backpropagation_vectorized(self.weights, A, Z, y_shuffled, self.lambda_reg)
                 self.update_weights(finalized_D)
+
             else:
                 raise ValueError("Mode must be either 'batch' or 'mini-batch'")
 
+            # Compute cost on full dataset
             A, _, _, _ = forward_propagation(self.weights, X)
             _, final_cost = cost_function(A[-1], y, self.weights, self.lambda_reg)
             self.cost_history.append(final_cost)
 
+            # Print intermediate results
             prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
             model_info = f"Hidden={self.layer_sizes[1:-1]}, λ={self.lambda_reg}, dataset={DATASET_NAME}"
             if m_size % 10 == 0:
                 print(f"{prefix}Epoch {m_size} - Cost: {final_cost:.8f} - {model_info}")
 
+            # Stop training if max m_size reached
             if m_size == stopping_J:
                 print(f"{prefix}Stopping at m_size {m_size} - Final Cost J: {final_cost:.8f}")
+                # save for debug
+                self.last_A = A
+                self.last_Z = Z
+                self.finalized_D = finalized_D
+                self.final_cost = final_cost
                 break
 
             m_size += 1
 
     def predict(self, X):
+        # Return output layer activation as prediction
         A, _, _, _ = forward_propagation(self.weights, X)
         return A[-1]
 
 # === Load dataset and apply preprocessing ===
 def load_dataset():
+    # Load dataset from CSV file
     DATA_PATH = f"datasets/{DATASET_NAME}.csv"
     df = pd.read_csv(DATA_PATH)
     if 'label' not in df.columns:
@@ -94,7 +122,7 @@ def load_dataset():
     y = df['label'].copy()
     X = df.drop(columns=['label'])
 
-    # Normalize numeric columns and apply one-hot encoding to categorical columns
+    # Normalize numeric columns and one-hot encode categorical columns
     for col in X.columns:
         if col.endswith("_num"):
             mean = X[col].mean()
@@ -110,17 +138,16 @@ def load_dataset():
 
 # === Stratified K-Fold Split ===
 def stratified_k_fold_split(X, y, k=5):
+    # Create stratified folds with equal class distribution
     df = pd.DataFrame(X)
     df['label'] = y.ravel()
     class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)
     class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)
     folds = []
     for i in range(k):
-        # test data
         c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]
         c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]
         test_df = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
-        # train data
         remaining_c0 = pd.concat([class_0.iloc[:int(len(class_0)*i/k)], class_0.iloc[int(len(class_0)*(i+1)/k):]])
         remaining_c1 = pd.concat([class_1.iloc[:int(len(class_1)*i/k)], class_1.iloc[int(len(class_1)*(i+1)/k):]])
         train_df = pd.concat([remaining_c0, remaining_c1]).sample(frac=1).reset_index(drop=True)
@@ -147,6 +174,7 @@ def my_f1_score(y_true, y_pred):
 
 # === Plot Best Model's Learning Curve ===
 def plot_best_learning_curve(results, dataset_name, save_folder):
+    # Identify model with lowest final cost
     best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])
     best_info = results[best_key]
     model = best_info['model']
@@ -159,11 +187,10 @@ def plot_best_learning_curve(results, dataset_name, save_folder):
 
     os.makedirs("evaluation", exist_ok=True)
 
-    # X축: m_size * train_size
+    # X-axis: iteration * number of training instances
     x_vals = [i * train_size for i in range(len(model.cost_history))]
     y_vals = model.cost_history
 
-    # 조건부 설명 텍스트 만들기
     info_text = f"λ={lambda_reg},  Hidden={hidden_layer}, α={alpha}, Mode={mode}"
     if mode == "mini-batch":
         info_text += f", Batch Size={batch_size}"
@@ -176,12 +203,10 @@ def plot_best_learning_curve(results, dataset_name, save_folder):
     plt.grid(True)
     plt.tight_layout()
 
-    filename = f"{save_folder}/{dataset_name.lower()}_best_curve.png"
+    filename = f"{save_folder}/{FILE_NAME.lower()}_best_curve.png"
     plt.savefig(filename)
     print(f"🌟 Saved best learning curve: {filename}")
     plt.close()
-
-
 
 # === Save Metrics Table as Image ===
 def save_metrics_table(results_by_dataset, save_folder):
@@ -190,7 +215,7 @@ def save_metrics_table(results_by_dataset, save_folder):
         fig, ax = plt.subplots()
         ax.axis('off')
 
-        # ✅ 조건부로 Batch Size 컬럼 추가
+        # Determine table columns based on whether mini-batch was used
         if any(val['mode'] == 'mini-batch' for val in dataset_results.values()):
             col_labels = ["Layer & Neuron", "Lambda", "Alpha", "Batch Size", "Mode", "Avg Accuracy", "Avg F1 Score"]
             show_batch_size = True
@@ -201,6 +226,7 @@ def save_metrics_table(results_by_dataset, save_folder):
         cell_data = []
         grouped = {}
 
+        # Group by configuration for averaging
         for key, val in dataset_results.items():
             h = tuple(val['hidden'])
             l = val['lambda_reg']
@@ -215,18 +241,10 @@ def save_metrics_table(results_by_dataset, save_folder):
             avg_acc = np.mean(accs)
             avg_f1 = np.mean(f1s)
 
-            row = [
-                str(h),
-                f"{l:.3f}",
-                f"{a:.3f}",
-            ]
+            row = [str(h), f"{l}", f"{a:.3f}"]
             if show_batch_size:
                 row.append(str(b))
-            row.extend([
-                m,
-                f"{avg_acc:.4f}",
-                f"{avg_f1:.4f}"
-            ])
+            row.extend([m, f"{avg_acc:.4f}", f"{avg_f1:.4f}"])
             cell_data.append(row)
 
         table = ax.table(cellText=cell_data, colLabels=col_labels, loc='center', cellLoc='center')
@@ -236,25 +254,25 @@ def save_metrics_table(results_by_dataset, save_folder):
 
         plt.title(f"{dataset_name} Model Performance", fontweight='bold')
         plt.tight_layout()
-        filename = f"{save_folder}/{dataset_name.lower()}_table.png"
+        filename = f"{save_folder}/{FILE_NAME.lower()}_table.png"
         plt.savefig(filename)
         print(f"📋 Saved metrics table: {filename}")
         plt.close()
 
 
-# === Create Debug File Function ===
+# === Neural Network Execution Wrapper ===
 def neural_network():
-    X, y = load_dataset()
-    folds = stratified_k_fold_split(X, y, k=5)
+    X, y = load_dataset()  # Load data and labels
+    folds = stratified_k_fold_split(X, y, k=5)  # Create 5-fold split
 
-    lambda_reg_list = [0.001, 0.0001, 0.00001, 0.000001]  # Regularization values
-    hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures
-    alpha = 0.1
-    batch_size = 32
-    mode = "batch"
+    lambda_reg_list = [0.1, 0.000001]  # List of λ values to test
+    hidden_layers = [[32], [32, 16], [32, 16, 8], [32, 16, 8, 4]]  # Layer architectures to test
+    alpha = 0.1            # Learning rate
+    batch_size = 32        # Size of mini-batches
+    mode = TRAIN_MODE        # Training mode
 
     dataset_name = DATASET_NAME
-    results = {}
+    results = {}  # Dictionary to collect evaluation metrics
 
     for h_idx, hidden in enumerate(hidden_layers):
         for l_idx, lambda_reg in enumerate(lambda_reg_list):
@@ -264,25 +282,31 @@ def neural_network():
                 X_test = test_df.drop(columns=['label']).values
                 y_test = test_df['label'].values.astype(int).ravel()
 
+                # Initialize model with specific structure and parameters
                 model = NeuralNetwork(
                     layer_sizes=[X_train.shape[1], *hidden, 1],
                     alpha=alpha,
                     lambda_reg=lambda_reg
                 )
 
+                # Train the model
                 model.fit(
                     X_train, y_train,
                     batch_size=batch_size,
                     fold_index=i,
                     mode=mode,
-                    stopping_J=M_SIZE  # ← 추가된 인자
+                    stopping_J=M_SIZE
                 )
 
+                # Make predictions
                 preds = model.predict(X_test)
                 preds_binary = (preds >= 0.5).astype(int).ravel()
+
+                # Evaluate performance
                 acc = my_accuracy(y_test, preds_binary)
                 f1 = my_f1_score(y_test, preds_binary)
 
+                # Store results
                 results[f"Fold {i+1}-H{h_idx+1}-L{l_idx+1}"] = {
                     "hidden": hidden,
                     "lambda_reg": lambda_reg,
@@ -295,22 +319,41 @@ def neural_network():
                     "mode": mode
                 }
 
+    # Save performance table and learning curve
     save_metrics_table({dataset_name: results}, "evaluation")
     plot_best_learning_curve(results, dataset_name, "evaluation")
-    records = []
-    for key, val in results.items():
-        records.append({
-            "Fold": key,
-            "Hidden Layers": str(val['hidden']),
-            "Lambda": val['lambda_reg'],
-            "Accuracy": val['acc'],
-            "F1 Score": val['f1']
-        })
-    print(f"✅ Saved DataFrame to evaluation/{dataset_name.lower()}_results.csv")
 
-    if DEBUG_MODE==True:    
-        run_debug(model.weights, X_train, y_train, lambda_reg)
+    # Run debugging output if flag is enabled
+    if DEBUG_MODE == True:
+        A = model.last_A
+        Z = model.last_Z
+        finalized_D = model.finalized_D
+        final_cost = model.final_cost
 
+        # make as list
+        all_a_lists = [[a[i].reshape(-1, 1) for a in A] for i in range(X_train.shape[0])]
+        all_z_lists = [[z[i].reshape(-1, 1) for z in Z] for i in range(X_train.shape[0])]
+        pred_y_list = [a_list[-1] for a_list in all_a_lists]
+        true_y_list = [y_train[i].reshape(-1, 1) for i in range(y_train.shape[0])]
+        J_list = [-(yt.T @ np.log(yp) + (1 - yt).T @ np.log(1 - yp)).item()
+                for yt, yp in zip(true_y_list, pred_y_list)]
 
+        # delta_list, D_list calculation
+        delta_list = []
+        D_list = []
+        for i in range(X_train.shape[0]):
+            deltas = [None] * len(model.weights)
+            deltas[-1] = all_a_lists[i][-1] - y_train[i].reshape(-1, 1)
+            for l in reversed(range(len(model.weights) - 1)):
+                a = all_a_lists[i][l + 1][1:]  # exclude bias
+                da = a * (1 - a)
+                deltas[l] = (model.weights[l + 1][:, 1:].T @ deltas[l + 1]) * da
+            delta_list.append(deltas)
+            D_list.append([deltas[l] @ all_a_lists[i][l].T for l in range(len(model.weights))])
+
+        # call debug function
+        debug_text.main(lambda_reg, X_train, y_train, model.weights, all_a_lists, all_z_lists,
+                J_list, final_cost, delta_list, D_list, finalized_D, FILE_NAME)
+# === Main Entry Point ===
 if __name__ == "__main__":
     neural_network()

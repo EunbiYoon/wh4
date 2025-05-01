@@ -2,6 +2,8 @@
 import numpy as np
 import debug_text as debug_text
 
+DEBUG_FILENAME="example1"
+
 def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
@@ -61,7 +63,7 @@ def backpropagation_vectorized(Theta, A, Z, Y, lambda_reg):
 
     return gradients
 
-def run_debug(Theta, X, y, lambda_reg):
+def run_debug(Theta, X, y, lambda_reg, DEBUG_FILENAME):
     np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
     A, Z, all_a_lists, all_z_lists = forward_propagation(Theta, X)
     pred_y_list = [a_list[-1] for a_list in all_a_lists]
@@ -89,7 +91,7 @@ def run_debug(Theta, X, y, lambda_reg):
     finalized_D = backpropagation_vectorized(Theta, A, Z, y, lambda_reg)
     _, final_cost = cost_function(A[-1], y, Theta, lambda_reg)
 
-    debug_text.main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D)
+    debug_text.main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME)
 
 if __name__ == "__main__":
     ### Example 1
@@ -133,4 +135,4 @@ if __name__ == "__main__":
     Theta = [np.array(t) for t in Theta]
     X = np.array(X)
     y = np.array(y)
-    run_debug(Theta, X, y, lambda_reg)
+    run_debug(Theta, X, y, lambda_reg, DEBUG_FILENAME)

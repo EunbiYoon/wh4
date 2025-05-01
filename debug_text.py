@@ -1,7 +1,9 @@
 import numpy as np
 
-def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D): 
-    with open("debug/backprop_debug.txt", "w", encoding="utf-8") as f:
+
+
+def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME): 
+    with open(f"debug/backprop_{DEBUG_FILENAME}.txt", "w", encoding="utf-8") as f:
         np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
         def println(line=""):

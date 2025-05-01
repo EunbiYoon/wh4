@@ -49,14 +49,6 @@
         "documentation": {}
     },
     {
-        "label": "run_debug",
-        "importPath": "propagation",
-        "description": "propagation",
-        "isExtraImport": true,
-        "detail": "propagation",
-        "documentation": {}
-    },
-    {
         "label": "NeuralNetwork",
         "importPath": "nn",
         "description": "nn",
@@ -161,7 +153,7 @@
         "kind": 2,
         "importPath": "debug_text",
         "description": "debug_text",
-        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D): \n    with open(\"debug/backprop_debug.txt\", \"w\", encoding=\"utf-8\") as f:\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")\n        structure = [len(X[0])] + [len(t) for t in Theta]\n        println(\"Initializing the network with the following structure (number of neurons per layer): \" + str(structure).replace(\",\", \"\") + \"\\n\")\n        for i, theta in enumerate(Theta):\n            println(f\"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):\")",
+        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME): \n    with open(f\"debug/backprop_{DEBUG_FILENAME}.txt\", \"w\", encoding=\"utf-8\") as f:\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")\n        structure = [len(X[0])] + [len(t) for t in Theta]\n        println(\"Initializing the network with the following structure (number of neurons per layer): \" + str(structure).replace(\",\", \"\") + \"\\n\")\n        for i, theta in enumerate(Theta):\n            println(f\"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):\")",
         "detail": "debug_text",
         "documentation": {}
     },
@@ -233,7 +225,7 @@
         "kind": 6,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "class NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes\n        self.alpha = alpha\n        self.lambda_reg = lambda_reg\n        self.weights = self.initialize_weights()\n        self.cost_history = []\n    def initialize_weights(self):\n        weights = []\n        for i in range(len(self.layer_sizes) - 1):",
+        "peekOfCode": "class NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes  # Architecture of the network\n        self.alpha = alpha              # Learning rate\n        self.lambda_reg = lambda_reg    # Regularization parameter\n        self.weights = self.initialize_weights()  # Random weight initialization\n        self.cost_history = []          # Store J value per training set\n    def initialize_weights(self):\n        # Initialize weights for each layer using uniform distribution\n        weights = []",
         "detail": "nn",
         "documentation": {}
     },
@@ -242,7 +234,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def load_dataset():\n    DATA_PATH = f\"datasets/{DATASET_NAME}.csv\"\n    df = pd.read_csv(DATA_PATH)\n    if 'label' not in df.columns:\n        raise ValueError(\"Dataset must contain a 'label' column.\")\n    y = df['label'].copy()\n    X = df.drop(columns=['label'])\n    # Normalize numeric columns and apply one-hot encoding to categorical columns\n    for col in X.columns:\n        if col.endswith(\"_num\"):",
+        "peekOfCode": "def load_dataset():\n    # Load dataset from CSV file\n    DATA_PATH = f\"datasets/{DATASET_NAME}.csv\"\n    df = pd.read_csv(DATA_PATH)\n    if 'label' not in df.columns:\n        raise ValueError(\"Dataset must contain a 'label' column.\")\n    y = df['label'].copy()\n    X = df.drop(columns=['label'])\n    # Normalize numeric columns and one-hot encode categorical columns\n    for col in X.columns:",
         "detail": "nn",
         "documentation": {}
     },
@@ -251,7 +243,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def stratified_k_fold_split(X, y, k=5):\n    df = pd.DataFrame(X)\n    df['label'] = y.ravel()\n    class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)\n    class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)\n    folds = []\n    for i in range(k):\n        # test data\n        c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]\n        c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]",
+        "peekOfCode": "def stratified_k_fold_split(X, y, k=5):\n    # Create stratified folds with equal class distribution\n    df = pd.DataFrame(X)\n    df['label'] = y.ravel()\n    class_0 = df[df['label'] == 0].sample(frac=1).reset_index(drop=True)\n    class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)\n    folds = []\n    for i in range(k):\n        c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]\n        c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]",
         "detail": "nn",
         "documentation": {}
     },
@@ -278,7 +270,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def plot_best_learning_curve(results, dataset_name, save_folder):\n    best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])\n    best_info = results[best_key]\n    model = best_info['model']\n    hidden_layer = best_info['hidden']\n    lambda_reg = best_info['lambda_reg']\n    train_size = best_info['train_size']\n    alpha = best_info['alpha']\n    mode = best_info['mode']\n    batch_size = best_info['batch_size']",
+        "peekOfCode": "def plot_best_learning_curve(results, dataset_name, save_folder):\n    # Identify model with lowest final cost\n    best_key = min(results, key=lambda k: results[k]['model'].cost_history[-1])\n    best_info = results[best_key]\n    model = best_info['model']\n    hidden_layer = best_info['hidden']\n    lambda_reg = best_info['lambda_reg']\n    train_size = best_info['train_size']\n    alpha = best_info['alpha']\n    mode = best_info['mode']",
         "detail": "nn",
         "documentation": {}
     },
@@ -287,7 +279,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def save_metrics_table(results_by_dataset, save_folder):\n    os.makedirs(\"evaluation\", exist_ok=True)\n    for dataset_name, dataset_results in results_by_dataset.items():\n        fig, ax = plt.subplots()\n        ax.axis('off')\n        # ✅ 조건부로 Batch Size 컬럼 추가\n        if any(val['mode'] == 'mini-batch' for val in dataset_results.values()):\n            col_labels = [\"Layer & Neuron\", \"Lambda\", \"Alpha\", \"Batch Size\", \"Mode\", \"Avg Accuracy\", \"Avg F1 Score\"]\n            show_batch_size = True\n        else:",
+        "peekOfCode": "def save_metrics_table(results_by_dataset, save_folder):\n    os.makedirs(\"evaluation\", exist_ok=True)\n    for dataset_name, dataset_results in results_by_dataset.items():\n        fig, ax = plt.subplots()\n        ax.axis('off')\n        # Determine table columns based on whether mini-batch was used\n        if any(val['mode'] == 'mini-batch' for val in dataset_results.values()):\n            col_labels = [\"Layer & Neuron\", \"Lambda\", \"Alpha\", \"Batch Size\", \"Mode\", \"Avg Accuracy\", \"Avg F1 Score\"]\n            show_batch_size = True\n        else:",
         "detail": "nn",
         "documentation": {}
     },
@@ -296,7 +288,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def neural_network():\n    X, y = load_dataset()\n    folds = stratified_k_fold_split(X, y, k=5)\n    lambda_reg_list = [0.001, 0.0001, 0.00001, 0.000001]  # Regularization values\n    hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures\n    alpha = 0.1\n    batch_size = 32\n    mode = \"batch\"\n    dataset_name = DATASET_NAME\n    results = {}",
+        "peekOfCode": "def neural_network():\n    X, y = load_dataset()  # Load data and labels\n    folds = stratified_k_fold_split(X, y, k=5)  # Create 5-fold split\n    lambda_reg_list = [0.1, 0.000001]  # List of λ values to test\n    hidden_layers = [[32], [32, 16], [32, 16, 8], [32, 16, 8, 4]]  # Layer architectures to test\n    alpha = 0.1            # Learning rate\n    batch_size = 32        # Size of mini-batches\n    mode = TRAIN_MODE        # Training mode\n    dataset_name = DATASET_NAME\n    results = {}  # Dictionary to collect evaluation metrics",
         "detail": "nn",
         "documentation": {}
     },
@@ -305,7 +297,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DATASET_NAME = \"raisin\"\nM_SIZE = 10\nDEBUG_MODE = True\n# === Neural Network Class ===\nclass NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes\n        self.alpha = alpha\n        self.lambda_reg = lambda_reg\n        self.weights = self.initialize_weights()",
+        "peekOfCode": "DATASET_NAME = \"wdbc\"  # Name of the dataset\nM_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:",
         "detail": "nn",
         "documentation": {}
     },
@@ -314,7 +306,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "M_SIZE = 10\nDEBUG_MODE = True\n# === Neural Network Class ===\nclass NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes\n        self.alpha = alpha\n        self.lambda_reg = lambda_reg\n        self.weights = self.initialize_weights()\n        self.cost_history = []",
+        "peekOfCode": "M_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")",
         "detail": "nn",
         "documentation": {}
     },
@@ -323,7 +315,16 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DEBUG_MODE = True\n# === Neural Network Class ===\nclass NeuralNetwork:\n    def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):\n        self.layer_sizes = layer_sizes\n        self.alpha = alpha\n        self.lambda_reg = lambda_reg\n        self.weights = self.initialize_weights()\n        self.cost_history = []\n    def initialize_weights(self):",
+        "peekOfCode": "DEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "TRAIN_MODE",
+        "kind": 5,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "TRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===\nclass NeuralNetwork:",
         "detail": "nn",
         "documentation": {}
     },
@@ -386,7 +387,7 @@
         "kind": 2,
         "importPath": "propagation",
         "description": "propagation",
-        "peekOfCode": "def run_debug(Theta, X, y, lambda_reg):\n    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n    A, Z, all_a_lists, all_z_lists = forward_propagation(Theta, X)\n    pred_y_list = [a_list[-1] for a_list in all_a_lists]\n    true_y_list = [y[i].reshape(-1, 1) for i in range(y.shape[0])]\n    J_list = []\n    for pred, true in zip(pred_y_list, true_y_list):\n        J = -(true.T @ np.log(pred) + (1 - true).T @ np.log(1 - pred))\n        J_list.append(J.item())\n    delta_list = []",
+        "peekOfCode": "def run_debug(Theta, X, y, lambda_reg, DEBUG_FILENAME):\n    np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n    A, Z, all_a_lists, all_z_lists = forward_propagation(Theta, X)\n    pred_y_list = [a_list[-1] for a_list in all_a_lists]\n    true_y_list = [y[i].reshape(-1, 1) for i in range(y.shape[0])]\n    J_list = []\n    for pred, true in zip(pred_y_list, true_y_list):\n        J = -(true.T @ np.log(pred) + (1 - true).T @ np.log(1 - pred))\n        J_list.append(J.item())\n    delta_list = []",
         "detail": "propagation",
         "documentation": {}
     }
