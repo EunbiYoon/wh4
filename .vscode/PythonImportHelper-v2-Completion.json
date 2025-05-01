@@ -9,19 +9,38 @@
         "documentation": {}
     },
     {
-        "label": "forward_propagation",
-        "importPath": "propagation",
-        "description": "propagation",
+        "label": "os",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "propagation",
+        "importPath": "os",
+        "description": "os",
+        "detail": "os",
         "documentation": {}
     },
     {
-        "label": "cost_function",
-        "importPath": "propagation",
-        "description": "propagation",
+        "label": "pandas",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "propagation",
+        "importPath": "pandas",
+        "description": "pandas",
+        "detail": "pandas",
+        "documentation": {}
+    },
+    {
+        "label": "matplotlib.pyplot",
+        "kind": 6,
+        "isExtraImport": true,
+        "importPath": "matplotlib.pyplot",
+        "description": "matplotlib.pyplot",
+        "detail": "matplotlib.pyplot",
+        "documentation": {}
+    },
+    {
+        "label": "OneHotEncoder",
+        "importPath": "sklearn.preprocessing",
+        "description": "sklearn.preprocessing",
+        "isExtraImport": true,
+        "detail": "sklearn.preprocessing",
         "documentation": {}
     },
     {
@@ -58,41 +77,6 @@
         "documentation": {}
     },
     {
-        "label": "os",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "os",
-        "description": "os",
-        "detail": "os",
-        "documentation": {}
-    },
-    {
-        "label": "pandas",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "pandas",
-        "description": "pandas",
-        "detail": "pandas",
-        "documentation": {}
-    },
-    {
-        "label": "matplotlib.pyplot",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "matplotlib.pyplot",
-        "description": "matplotlib.pyplot",
-        "detail": "matplotlib.pyplot",
-        "documentation": {}
-    },
-    {
-        "label": "OneHotEncoder",
-        "importPath": "sklearn.preprocessing",
-        "description": "sklearn.preprocessing",
-        "isExtraImport": true,
-        "detail": "sklearn.preprocessing",
-        "documentation": {}
-    },
-    {
         "label": "main",
         "kind": 2,
         "importPath": "debug_text",
@@ -102,11 +86,29 @@
         "documentation": {}
     },
     {
+        "label": "sigmoid",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def sigmoid(z):\n    return 1 / (1 + np.exp(-z))\ndef sigmoid_gradient(z):\n    s = sigmoid(z)\n    return s * (1 - s)\n# === Helpers to flatten/unflatten weight matrices ===\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flat, shapes):\n    weights = []",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "sigmoid_gradient",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def sigmoid_gradient(z):\n    s = sigmoid(z)\n    return s * (1 - s)\n# === Helpers to flatten/unflatten weight matrices ===\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flat, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
         "label": "flatten_weights",
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights",
+        "peekOfCode": "def flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flat, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flat[idx:idx + size].reshape(shape))\n        idx += size\n    return weights",
         "detail": "extra3",
         "documentation": {}
     },
@@ -115,16 +117,25 @@
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights\ndef compute_numerical_gradient(J, theta, epsilon):\n    grad = np.zeros_like(theta)",
+        "peekOfCode": "def unflatten_weights(flat, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flat[idx:idx + size].reshape(shape))\n        idx += size\n    return weights\n# === Forward propagation ===\ndef forward_propagation(Theta, X):",
         "detail": "extra3",
         "documentation": {}
     },
     {
-        "label": "compute_numerical_gradient",
+        "label": "forward_propagation",
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def compute_numerical_gradient(J, theta, epsilon):\n    grad = np.zeros_like(theta)\n    for i in range(len(theta)):\n        theta_plus = np.copy(theta)\n        theta_minus = np.copy(theta)\n        theta_plus[i] += epsilon\n        theta_minus[i] -= epsilon\n        grad[i] = (J(theta_plus) - J(theta_minus)) / (2 * epsilon)\n    return grad\ndef make_cost_function(X, y, shapes, lambda_reg):",
+        "peekOfCode": "def forward_propagation(Theta, X):\n    A = [X]\n    Z = []\n    for theta in Theta:\n        X = np.insert(X, 0, 1, axis=1)  # add bias\n        z = X @ theta.T\n        Z.append(z)\n        X = sigmoid(z)\n        A.append(X)\n    return A, Z",
+        "detail": "extra3",
+        "documentation": {}
+    },
+    {
+        "label": "cost_function",
+        "kind": 2,
+        "importPath": "extra3",
+        "description": "extra3",
+        "peekOfCode": "def cost_function(A_last, Y, Theta, lambda_reg):\n    m = Y.shape[0]\n    epsilon = 1e-8  # avoid log(0)\n    J = -np.sum(Y * np.log(A_last + epsilon) + (1 - Y) * np.log(1 - A_last + epsilon)) / m\n    # Regularization (if needed)\n    reg = sum(np.sum(theta[:, 1:] ** 2) for theta in Theta)\n    J += (lambda_reg / (2 * m)) * reg\n    return J\n# === Cost function wrapper ===\ndef make_cost_function(X, y, shapes, lambda_reg):",
         "detail": "extra3",
         "documentation": {}
     },
@@ -133,25 +144,16 @@
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def make_cost_function(X, y, shapes, lambda_reg):\n    def J(theta_flat):\n        weights = unflatten_weights(theta_flat, shapes)\n        A, *_ = forward_propagation(weights, X)\n        return cost_function(A[-1], y, weights, lambda_reg)[1]\n    return J\ndef numerical_gradient_only(Theta, X, y, lambda_reg, epsilons):\n    shapes = [w.shape for w in Theta]\n    theta_flat = flatten_weights(Theta)\n    J = make_cost_function(X, y, shapes, lambda_reg)",
+        "peekOfCode": "def make_cost_function(X, y, shapes, lambda_reg):\n    def J(theta_flat):\n        Theta = unflatten_weights(theta_flat, shapes)\n        A, _ = forward_propagation(Theta, X)\n        return cost_function(A[-1], y, Theta, lambda_reg)\n    return J\n# === Numerical gradient computation ===\ndef compute_numerical_gradient(J, theta_flat, epsilon):\n    num_grad = np.zeros_like(theta_flat)\n    for i in range(len(theta_flat)):",
         "detail": "extra3",
         "documentation": {}
     },
     {
-        "label": "numerical_gradient_only",
+        "label": "compute_numerical_gradient",
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def numerical_gradient_only(Theta, X, y, lambda_reg, epsilons):\n    shapes = [w.shape for w in Theta]\n    theta_flat = flatten_weights(Theta)\n    J = make_cost_function(X, y, shapes, lambda_reg)\n    for eps in epsilons:\n        print(f\"\\n=== Numerical Gradient with epsilon = {eps} ===\")\n        numerical_grad = compute_numerical_gradient(J, theta_flat, eps)\n        for i, g in enumerate(numerical_grad):\n            print(f\"theta[{i}] => Numerical Gradient: {g:.8f}\")\nif __name__ == \"__main__\":",
-        "detail": "extra3",
-        "documentation": {}
-    },
-    {
-        "label": "DATASET_NAME",
-        "kind": 5,
-        "importPath": "extra3",
-        "description": "extra3",
-        "peekOfCode": "DATASET_NAME = \"extra\"\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size",
+        "peekOfCode": "def compute_numerical_gradient(J, theta_flat, epsilon):\n    num_grad = np.zeros_like(theta_flat)\n    for i in range(len(theta_flat)):\n        theta_plus = theta_flat.copy()\n        theta_minus = theta_flat.copy()\n        theta_plus[i] += epsilon\n        theta_minus[i] -= epsilon\n        num_grad[i] = (J(theta_plus) - J(theta_minus)) / (2 * epsilon)\n    return num_grad\n# === Main execution for fixed example ===",
         "detail": "extra3",
         "documentation": {}
     },
