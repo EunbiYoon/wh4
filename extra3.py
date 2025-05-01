@@ -55,8 +55,8 @@ def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lambda_reg_list = [0.25, 0.5]
-    hidden_layers = [[8, 6], [8, 6, 4], [4]]
+    lambda_reg_list = [0.1, 0.01]  # Regularization values
+    hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures
     
     alpha = 0.01
     epochs = 100

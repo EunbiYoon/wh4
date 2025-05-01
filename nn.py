@@ -1,41 +1,41 @@
+# === Vectorized Neural Network Implementation ===
 import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.preprocessing import OneHotEncoder
-from propagation import backpropagation, forward_propagation, cost_function
+from propagation import backpropagation_vectorized, forward_propagation, cost_function
 
 # === Dataset Setting ===
-DATASET_NAME = "wdbc"
+DATASET_NAME = "loan"
 
 # === Neural Network Class ===
 class NeuralNetwork:
     def __init__(self, layer_sizes, alpha=0.01, lambda_reg=0.0):
-        self.layer_sizes = layer_sizes  # Number of neurons in each layer
-        self.alpha = alpha              # Learning rate
-        self.lambda_reg = lambda_reg                  # Regularization parameter
-        self.weights = self.initialize_weights()  # Initialize weights
-        self.cost_history = []          # Store cost at each epoch
+        self.layer_sizes = layer_sizes
+        self.alpha = alpha
+        self.lambda_reg = lambda_reg
+        self.weights = self.initialize_weights()
+        self.cost_history = []
 
-    # Initialize weights using He initialization
     def initialize_weights(self):
         weights = []
         for i in range(len(self.layer_sizes) - 1):
-            l_in = self.layer_sizes[i] + 1  # +1 for bias
+            l_in = self.layer_sizes[i] + 1
             l_out = self.layer_sizes[i + 1]
             weight = np.random.uniform(-1, 1, size=(l_out, l_in))
             weights.append(weight)
         return weights
 
-    # Update weights using gradients
     def update_weights(self, gradients):
         for i in range(len(self.weights)):
-            self.weights[i] = self.weights[i] - self.alpha * gradients[i]
+            self.weights[i] -= self.alpha * gradients[i]
 
-    # Fit the model using either batch or mini-batch gradient descent
-    def fit(self, X, y, epochs=100, batch_size=32, fold_index=None, mode='batch'):
+    def fit(self, X, y, batch_size=32, fold_index=None, mode='batch', stopping_J=600):
         m = X.shape[0]
-        for epoch in range(epochs):
+        epoch = 0
+
+        while True:
             if mode == 'mini-batch':
                 indices = np.arange(m)
                 np.random.shuffle(indices)
@@ -46,8 +46,9 @@ class NeuralNetwork:
                     end = start + batch_size
                     X_batch = X_shuffled[start:end]
                     y_batch = y_shuffled[start:end]
-                    all_a_lists, _ = forward_propagation(self.weights, X_batch)
-                    finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y_batch, self.lambda_reg)
+
+                    A, Z, _, _ = forward_propagation(self.weights, X_batch)
+                    finalized_D = backpropagation_vectorized(self.weights, A, Z, y_batch, self.lambda_reg)
                     self.update_weights(finalized_D)
 
             elif mode == 'batch':
@@ -56,23 +57,30 @@ class NeuralNetwork:
                 X_shuffled = X[indices]
                 y_shuffled = y[indices]
 
-                all_a_lists, _ = forward_propagation(self.weights, X)
-                finalized_D, _, _ = backpropagation(self.weights, all_a_lists, y, self.lambda_reg)
+                A, Z, _, _ = forward_propagation(self.weights, X_shuffled)
+                finalized_D = backpropagation_vectorized(self.weights, A, Z, y_shuffled, self.lambda_reg)
                 self.update_weights(finalized_D)
             else:
-                raise ValueError("Mode must be either 'batch' or 'mini-batch')")
+                raise ValueError("Mode must be either 'batch' or 'mini-batch'")
 
-            pred_ys = [a_list[-1] for a_list in all_a_lists]
-            _, final_cost = cost_function(pred_ys, y, self.weights, self.lambda_reg)
+            A, _, _, _ = forward_propagation(self.weights, X)
+            _, final_cost = cost_function(A[-1], y, self.weights, self.lambda_reg)
             self.cost_history.append(final_cost)
-            if epoch % 10 == 0:
-                prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
-                print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.4f}")
 
-    # Predict output for given input
+            prefix = f"[Fold {fold_index}] " if fold_index is not None else ""
+            model_info = f"Hidden={self.layer_sizes[1:-1]}, λ={self.lambda_reg}, dataset={DATASET_NAME}"
+            if epoch % 10 == 0:
+                print(f"{prefix}Epoch {epoch} - Cost: {final_cost:.8f} - {model_info}")
+
+            if epoch == stopping_J:
+                print(f"{prefix}Stopping at epoch {epoch} - Final Cost J: {final_cost:.8f}")
+                break
+
+            epoch += 1
+
     def predict(self, X):
-        all_a_lists, _ = forward_propagation(self.weights, X)
-        return np.array([a_list[-1] for a_list in all_a_lists])
+        A, _, _, _ = forward_propagation(self.weights, X)
+        return A[-1]
 
 # === Load dataset and apply preprocessing ===
 def load_dataset():
@@ -106,9 +114,11 @@ def stratified_k_fold_split(X, y, k=5):
     class_1 = df[df['label'] == 1].sample(frac=1).reset_index(drop=True)
     folds = []
     for i in range(k):
+        # test data
         c0 = class_0.iloc[int(len(class_0)*i/k):int(len(class_0)*(i+1)/k)]
         c1 = class_1.iloc[int(len(class_1)*i/k):int(len(class_1)*(i+1)/k)]
         test_df = pd.concat([c0, c1]).sample(frac=1).reset_index(drop=True)
+        # train data
         remaining_c0 = pd.concat([class_0.iloc[:int(len(class_0)*i/k)], class_0.iloc[int(len(class_0)*(i+1)/k):]])
         remaining_c1 = pd.concat([class_1.iloc[:int(len(class_1)*i/k)], class_1.iloc[int(len(class_1)*(i+1)/k):]])
         train_df = pd.concat([remaining_c0, remaining_c1]).sample(frac=1).reset_index(drop=True)
@@ -140,20 +150,36 @@ def plot_best_learning_curve(results, dataset_name, save_folder):
     model = best_info['model']
     hidden_layer = best_info['hidden']
     lambda_reg = best_info['lambda_reg']
+    train_size = best_info['train_size']
+    alpha = best_info['alpha']
+    mode = best_info['mode']
+    batch_size = best_info['batch_size']
 
     os.makedirs("evaluation", exist_ok=True)
+
+    # X축: epoch * train_size
+    x_vals = [i * train_size for i in range(len(model.cost_history))]
+    y_vals = model.cost_history
+
+    # 조건부 설명 텍스트 만들기
+    info_text = f"λ={lambda_reg},  Hidden={hidden_layer}, α={alpha}, Mode={mode}"
+    if mode == "mini-batch":
+        info_text += f", Batch Size={batch_size}"
+
     plt.figure()
-    plt.plot(model.cost_history, marker='o')
-    title = f"{dataset_name} BEST Learning Curve\nλ={lambda_reg}, Hidden={hidden_layer}"
-    plt.title(title, fontsize=12)
-    plt.xlabel("Epoch")
+    plt.plot(x_vals, y_vals, marker='o')
+    plt.title(f"{dataset_name} BEST Learning Curve\n{info_text}", fontsize=11)
+    plt.xlabel("Training Instances (Epoch x Train Set)")
     plt.ylabel("Cost (J)")
     plt.grid(True)
     plt.tight_layout()
+
     filename = f"{save_folder}/{dataset_name.lower()}_best_curve.png"
     plt.savefig(filename)
     print(f"🌟 Saved best learning curve: {filename}")
     plt.close()
+
+
 
 # === Save Metrics Table as Image ===
 def save_metrics_table(results_by_dataset, save_folder):
@@ -161,28 +187,51 @@ def save_metrics_table(results_by_dataset, save_folder):
     for dataset_name, dataset_results in results_by_dataset.items():
         fig, ax = plt.subplots()
         ax.axis('off')
-        col_labels = ["Layer & Neuron", "Lambda", "Avg Accuracy", "Avg F1 Score"]
+
+        # ✅ 조건부로 Batch Size 컬럼 추가
+        if any(val['mode'] == 'mini-batch' for val in dataset_results.values()):
+            col_labels = ["Layer & Neuron", "Lambda", "Alpha", "Batch Size", "Mode", "Avg Accuracy", "Avg F1 Score"]
+            show_batch_size = True
+        else:
+            col_labels = ["Layer & Neuron", "Lambda", "Alpha", "Mode", "Avg Accuracy", "Avg F1 Score"]
+            show_batch_size = False
+
         cell_data = []
         grouped = {}
+
         for key, val in dataset_results.items():
             h = tuple(val['hidden'])
             l = val['lambda_reg']
-            grouped.setdefault((h, l), []).append((val['acc'], val['f1']))
-        for (h, l), metrics in grouped.items():
+            a = val['alpha']
+            b = val['batch_size']
+            m = val['mode']
+            grouped.setdefault((h, l, a, b, m), []).append((val['acc'], val['f1']))
+
+        for (h, l, a, b, m), metrics in grouped.items():
             accs = [m[0] for m in metrics]
             f1s = [m[1] for m in metrics]
             avg_acc = np.mean(accs)
             avg_f1 = np.mean(f1s)
-            cell_data.append([
+
+            row = [
                 str(h),
-                f"{l:.2f}",
+                f"{l:.3f}",
+                f"{a:.3f}",
+            ]
+            if show_batch_size:
+                row.append(str(b))
+            row.extend([
+                m,
                 f"{avg_acc:.4f}",
                 f"{avg_f1:.4f}"
             ])
+            cell_data.append(row)
+
         table = ax.table(cellText=cell_data, colLabels=col_labels, loc='center', cellLoc='center')
         table.auto_set_font_size(False)
-        table.set_fontsize(12)
+        table.set_fontsize(11)
         table.scale(1.1, 1.6)
+
         plt.title(f"{dataset_name} Model Performance", fontweight='bold')
         plt.tight_layout()
         filename = f"{save_folder}/{dataset_name.lower()}_table.png"
@@ -190,16 +239,16 @@ def save_metrics_table(results_by_dataset, save_folder):
         print(f"📋 Saved metrics table: {filename}")
         plt.close()
 
+
 # === Main Execution Function ===
 def main():
     X, y = load_dataset()
     folds = stratified_k_fold_split(X, y, k=5)
 
-    lambda_reg_list = [0.25, 0.5]  # Regularization values
-    hidden_layers = [[8, 6], [8, 6, 4], [4]]  # Different architectures
-    alpha = 0.01
-    epochs = 100
-    batch_size = 16
+    lambda_reg_list = [0.1, 0.01]  # Regularization values
+    hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures
+    alpha = 0.1
+    batch_size = 32
     mode = "batch"
 
     dataset_name = DATASET_NAME
@@ -221,10 +270,10 @@ def main():
 
                 model.fit(
                     X_train, y_train,
-                    epochs=epochs,
                     batch_size=batch_size,
                     fold_index=i,
-                    mode=mode
+                    mode=mode,
+                    stopping_J=600  # ← 추가된 인자
                 )
 
                 preds = model.predict(X_test)
@@ -237,7 +286,11 @@ def main():
                     "lambda_reg": lambda_reg,
                     "acc": acc,
                     "f1": f1,
-                    "model": model
+                    "model": model,
+                    "train_size": X_train.shape[0],
+                    "alpha": alpha,
+                    "batch_size": batch_size,
+                    "mode": mode
                 }
 
     save_metrics_table({dataset_name: results}, "evaluation")
