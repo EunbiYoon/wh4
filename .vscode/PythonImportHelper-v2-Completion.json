@@ -49,59 +49,12 @@
         "documentation": {}
     },
     {
-        "label": "NeuralNetwork",
-        "importPath": "nn",
-        "description": "nn",
+        "label": "debug_text",
+        "kind": 6,
         "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "load_dataset",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "stratified_k_fold_split",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "my_accuracy",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "my_f1_score",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "save_metrics_table",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
-        "documentation": {}
-    },
-    {
-        "label": "plot_best_learning_curve",
-        "importPath": "nn",
-        "description": "nn",
-        "isExtraImport": true,
-        "detail": "nn",
+        "importPath": "debug_text",
+        "description": "debug_text",
+        "detail": "debug_text",
         "documentation": {}
     },
     {
@@ -140,20 +93,11 @@
         "documentation": {}
     },
     {
-        "label": "debug_text",
-        "kind": 6,
-        "isExtraImport": true,
-        "importPath": "debug_text",
-        "description": "debug_text",
-        "detail": "debug_text",
-        "documentation": {}
-    },
-    {
         "label": "main",
         "kind": 2,
         "importPath": "debug_text",
         "description": "debug_text",
-        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME): \n    with open(f\"debug/backprop_{DEBUG_FILENAME}.txt\", \"w\", encoding=\"utf-8\") as f:\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")\n        structure = [len(X[0])] + [len(t) for t in Theta]\n        println(\"Initializing the network with the following structure (number of neurons per layer): \" + str(structure).replace(\",\", \"\") + \"\\n\")\n        for i, theta in enumerate(Theta):\n            println(f\"Initial Theta{i+1} (the weights of each neuron, including the bias weight, are stored in the rows):\")",
+        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME, header=\"\"): \n    with open(f\"debug/backprop_{DEBUG_FILENAME}.txt\", \"w\", encoding=\"utf-8\") as f:\n        if header:\n            f.write(\"=\" * 80 + \"\\n\")\n            f.write(header + \"\\n\")\n            f.write(\"=\" * 80 + \"\\n\")\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")",
         "detail": "debug_text",
         "documentation": {}
     },
@@ -171,16 +115,7 @@
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights\n# === Cost Function Wrapper ===\ndef make_cost_function(X, y, shapes, lambda_reg):",
-        "detail": "extra3",
-        "documentation": {}
-    },
-    {
-        "label": "make_cost_function",
-        "kind": 2,
-        "importPath": "extra3",
-        "description": "extra3",
-        "peekOfCode": "def make_cost_function(X, y, shapes, lambda_reg):\n    def J(theta_flat):\n        weights = unflatten_weights(theta_flat, shapes)\n        all_a_lists, _ = forward_propagation(weights, X)\n        pred_y_list = [a_list[-1] for a_list in all_a_lists]\n        _, final_cost = cost_function(pred_y_list, y, weights, lambda_reg)\n        return final_cost\n    return J\n# === Numerical Gradient Computation ===\ndef compute_numerical_gradient(J, theta, epsilon=1e-4):",
+        "peekOfCode": "def unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size\n    return weights\ndef compute_numerical_gradient(J, theta, epsilon):\n    grad = np.zeros_like(theta)",
         "detail": "extra3",
         "documentation": {}
     },
@@ -189,25 +124,25 @@
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def compute_numerical_gradient(J, theta, epsilon=1e-4):\n    num_grad = np.zeros_like(theta)\n    for i in range(len(theta)):\n        theta_plus = np.copy(theta)\n        theta_minus = np.copy(theta)\n        theta_plus[i] += epsilon\n        theta_minus[i] -= epsilon\n        num_grad[i] = (J(theta_plus) - J(theta_minus)) / (2 * epsilon)\n    return num_grad\n# === Main Entry for Numerical Gradient Update ===",
+        "peekOfCode": "def compute_numerical_gradient(J, theta, epsilon):\n    grad = np.zeros_like(theta)\n    for i in range(len(theta)):\n        theta_plus = np.copy(theta)\n        theta_minus = np.copy(theta)\n        theta_plus[i] += epsilon\n        theta_minus[i] -= epsilon\n        grad[i] = (J(theta_plus) - J(theta_minus)) / (2 * epsilon)\n    return grad\ndef make_cost_function(X, y, shapes, lambda_reg):",
         "detail": "extra3",
         "documentation": {}
     },
     {
-        "label": "numerical_gradient_update",
+        "label": "make_cost_function",
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def numerical_gradient_update(weights, X, y, lambda_reg, alpha):\n    shapes = [w.shape for w in weights]\n    theta_flat = flatten_weights(weights)\n    J = make_cost_function(X, y, shapes, lambda_reg)\n    grad_flat = compute_numerical_gradient(J, theta_flat)\n    grad_structured = unflatten_weights(grad_flat, shapes)\n    # Update weights manually here and return new ones\n    updated_weights = [w - alpha * g for w, g in zip(weights, grad_structured)]\n    return updated_weights\ndef main():",
+        "peekOfCode": "def make_cost_function(X, y, shapes, lambda_reg):\n    def J(theta_flat):\n        weights = unflatten_weights(theta_flat, shapes)\n        A, *_ = forward_propagation(weights, X)\n        return cost_function(A[-1], y, weights, lambda_reg)[1]\n    return J\ndef numerical_gradient_only(Theta, X, y, lambda_reg, epsilons):\n    shapes = [w.shape for w in Theta]\n    theta_flat = flatten_weights(Theta)\n    J = make_cost_function(X, y, shapes, lambda_reg)",
         "detail": "extra3",
         "documentation": {}
     },
     {
-        "label": "main",
+        "label": "numerical_gradient_only",
         "kind": 2,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "def main():\n    X, y = load_dataset()\n    folds = stratified_k_fold_split(X, y, k=5)\n    lambda_reg_list = [0.1, 0.01]  # Regularization values\n    hidden_layers = [[32],[32,16],[32,16,8]]  # Different architectures\n    alpha = 0.01\n    epochs = 100\n    batch_size = 16\n    mode = \"mini-batch\"\n    dataset_name = DATASET_NAME",
+        "peekOfCode": "def numerical_gradient_only(Theta, X, y, lambda_reg, epsilons):\n    shapes = [w.shape for w in Theta]\n    theta_flat = flatten_weights(Theta)\n    J = make_cost_function(X, y, shapes, lambda_reg)\n    for eps in epsilons:\n        print(f\"\\n=== Numerical Gradient with epsilon = {eps} ===\")\n        numerical_grad = compute_numerical_gradient(J, theta_flat, eps)\n        for i, g in enumerate(numerical_grad):\n            print(f\"theta[{i}] => Numerical Gradient: {g:.8f}\")\nif __name__ == \"__main__\":",
         "detail": "extra3",
         "documentation": {}
     },
@@ -216,7 +151,7 @@
         "kind": 5,
         "importPath": "extra3",
         "description": "extra3",
-        "peekOfCode": "DATASET_NAME = \"wdbc\"\n# === Flatten and Unflatten Functions ===\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))",
+        "peekOfCode": "DATASET_NAME = \"extra\"\ndef flatten_weights(weights):\n    return np.concatenate([w.flatten() for w in weights])\ndef unflatten_weights(flattened, shapes):\n    weights = []\n    idx = 0\n    for shape in shapes:\n        size = np.prod(shape)\n        weights.append(flattened[idx:idx + size].reshape(shape))\n        idx += size",
         "detail": "extra3",
         "documentation": {}
     },
@@ -288,7 +223,7 @@
         "kind": 2,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "def neural_network():\n    X, y = load_dataset()  # Load data and labels\n    folds = stratified_k_fold_split(X, y, k=5)  # Create 5-fold split\n    lambda_reg_list = [0.1, 0.000001]  # List of λ values to test\n    hidden_layers = [[32], [32, 16], [32, 16, 8], [32, 16, 8, 4]]  # Layer architectures to test\n    alpha = 0.1            # Learning rate\n    batch_size = 32        # Size of mini-batches\n    mode = TRAIN_MODE        # Training mode\n    dataset_name = DATASET_NAME\n    results = {}  # Dictionary to collect evaluation metrics",
+        "peekOfCode": "def neural_network():\n    X, y = load_dataset()  # Load data and labels\n    folds = stratified_k_fold_split(X, y, k=5)  # Create 5-fold split\n    lambda_reg_list = [0.1, 0.000001]  # List of λ values to test\n    hidden_layers = [[32], [32, 16], [32, 16, 8], [32, 16, 8, 4]]  # Layer architectures to test\n    alpha = 0.1            # Learning rate\n    batch_size = BATCH_SIZE        # Size of mini-batches\n    mode = TRAIN_MODE        # Training mode\n    dataset_name = DATASET_NAME\n    results = {}  # Dictionary to collect evaluation metrics",
         "detail": "nn",
         "documentation": {}
     },
@@ -297,7 +232,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DATASET_NAME = \"wdbc\"  # Name of the dataset\nM_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:",
+        "peekOfCode": "DATASET_NAME = \"raisin\"  # Name of the dataset\nM_SIZE = 50            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"",
         "detail": "nn",
         "documentation": {}
     },
@@ -306,7 +241,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "M_SIZE = 300            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")",
+        "peekOfCode": "M_SIZE = 50            # m for stopping criterion\nDEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:",
         "detail": "nn",
         "documentation": {}
     },
@@ -315,7 +250,7 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "DEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===",
+        "peekOfCode": "DEBUG_MODE = True         # If True, run debugging routine at the end\nTRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")",
         "detail": "nn",
         "documentation": {}
     },
@@ -324,7 +259,16 @@
         "kind": 5,
         "importPath": "nn",
         "description": "nn",
-        "peekOfCode": "TRAIN_MODE = \"batch\"    # Choose \"batch\" or \"mini-batch\"\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===\nclass NeuralNetwork:",
+        "peekOfCode": "TRAIN_MODE = \"mini-batch\"    # Choose \"batch\" or \"mini-batch\"\nBATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===",
+        "detail": "nn",
+        "documentation": {}
+    },
+    {
+        "label": "BATCH_SIZE",
+        "kind": 5,
+        "importPath": "nn",
+        "description": "nn",
+        "peekOfCode": "BATCH_SIZE = 32\n# === FILE_NAME Setting ===\nif TRAIN_MODE==\"batch\":\n    FILE_NAME = DATASET_NAME\nelif TRAIN_MODE==\"mini-batch\":\n    FILE_NAME = DATASET_NAME+\"_minibatch\"\nelse:\n    print(\"choose mini-batch or batch in TRAIN_MODE\")\n# === Neural Network Class ===\nclass NeuralNetwork:",
         "detail": "nn",
         "documentation": {}
     },

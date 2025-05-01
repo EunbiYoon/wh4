@@ -8,10 +8,11 @@ from propagation import backpropagation_vectorized, forward_propagation, cost_fu
 import debug_text
 
 # === Setting ===
-DATASET_NAME = "wdbc"  # Name of the dataset
-M_SIZE = 300            # m for stopping criterion
+DATASET_NAME = "raisin"  # Name of the dataset
+M_SIZE = 50            # m for stopping criterion
 DEBUG_MODE = True         # If True, run debugging routine at the end
-TRAIN_MODE = "batch"    # Choose "batch" or "mini-batch"
+TRAIN_MODE = "mini-batch"    # Choose "batch" or "mini-batch"
+BATCH_SIZE = 32
 
 # === FILE_NAME Setting ===
 if TRAIN_MODE=="batch":
@@ -268,7 +269,7 @@ def neural_network():
     lambda_reg_list = [0.1, 0.000001]  # List of λ values to test
     hidden_layers = [[32], [32, 16], [32, 16, 8], [32, 16, 8, 4]]  # Layer architectures to test
     alpha = 0.1            # Learning rate
-    batch_size = 32        # Size of mini-batches
+    batch_size = BATCH_SIZE        # Size of mini-batches
     mode = TRAIN_MODE        # Training mode
 
     dataset_name = DATASET_NAME
@@ -325,12 +326,11 @@ def neural_network():
 
     # Run debugging output if flag is enabled
     if DEBUG_MODE == True:
-        A = model.last_A
-        Z = model.last_Z
+        A, Z, _, _ = forward_propagation(model.weights, X_train)
         finalized_D = model.finalized_D
         final_cost = model.final_cost
 
-        # make as list
+        # Now safely extract all a_lists and z_lists for every instance
         all_a_lists = [[a[i].reshape(-1, 1) for a in A] for i in range(X_train.shape[0])]
         all_z_lists = [[z[i].reshape(-1, 1) for z in Z] for i in range(X_train.shape[0])]
         pred_y_list = [a_list[-1] for a_list in all_a_lists]
@@ -354,6 +354,7 @@ def neural_network():
         # call debug function
         debug_text.main(lambda_reg, X_train, y_train, model.weights, all_a_lists, all_z_lists,
                 J_list, final_cost, delta_list, D_list, finalized_D, FILE_NAME)
+        
 # === Main Entry Point ===
 if __name__ == "__main__":
     neural_network()

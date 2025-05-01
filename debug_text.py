@@ -2,8 +2,12 @@ import numpy as np
 
 
 
-def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME): 
+def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME, header=""): 
     with open(f"debug/backprop_{DEBUG_FILENAME}.txt", "w", encoding="utf-8") as f:
+        if header:
+            f.write("=" * 80 + "\n")
+            f.write(header + "\n")
+            f.write("=" * 80 + "\n")
         np.set_printoptions(precision=5, suppress=True, floatmode='fixed')
 
         def println(line=""):
