@@ -67,18 +67,50 @@ def compute_numerical_gradient(J, theta_flat, epsilon):
 
 # === Main execution for fixed example ===
 if __name__ == "__main__":
-    # Input from example
-    X = np.array([[0.13], [0.42]])  # shape (2, 1)
-    y = np.array([[0.9], [0.23]])   # shape (2, 1)
+    ############# Example 1
+    # lambda_reg = 0
+    # X = np.array([[0.13], [0.42]])  # shape (2, 1)
+    # y = np.array([[0.9], [0.23]])   # shape (2, 1)
 
-    # Fixed weights from example1
+    # # Fixed weights from example1
+    # Theta = [
+    #     np.array([[0.4, 0.1], [0.3, 0.2]]),       # Theta1: 2 neurons, 1 input + bias
+    #     np.array([[0.7, 0.5, 0.6]])              # Theta2: 1 neuron, 2 inputs + bias
+    # ]
+
+
+    ############# Example 1
+    lambda_reg = 0.25
+
+    X = np.array([
+        [0.32000, 0.68000],
+        [0.83000, 0.02000]
+    ])
+
+    y = np.array([
+        [0.75000, 0.98000],
+        [0.75000, 0.28000]
+    ])
+
     Theta = [
-        np.array([[0.4, 0.1], [0.3, 0.2]]),       # Theta1: 2 neurons, 1 input + bias
-        np.array([[0.7, 0.5, 0.6]])              # Theta2: 1 neuron, 2 inputs + bias
+        np.array([
+            [0.42000, 0.15000, 0.40000],
+            [0.72000, 0.10000, 0.54000],
+            [0.01000, 0.19000, 0.42000],
+            [0.30000, 0.35000, 0.68000]
+        ]),
+        np.array([
+            [0.21000, 0.67000, 0.14000, 0.96000, 0.87000],
+            [0.87000, 0.42000, 0.20000, 0.32000, 0.89000],
+            [0.03000, 0.56000, 0.80000, 0.69000, 0.09000]
+        ]),
+        np.array([
+            [0.04000, 0.87000, 0.42000, 0.53000],
+            [0.17000, 0.10000, 0.95000, 0.69000]
+        ])
     ]
 
     for i in range(len(EPS)):
-        lambda_reg = 0  # no regularization
         shapes = [t.shape for t in Theta]
         flat_Theta = flatten_weights(Theta)
 
