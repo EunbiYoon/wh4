@@ -74,8 +74,8 @@ if __name__ == "__main__":
 
     # # Fixed weights from example1
     # Theta = [
-    #     np.array([[0.4, 0.1], [0.3, 0.2]]),       # Theta1: 2 neurons, 1 input + bias
-    #     np.array([[0.7, 0.5, 0.6]])              # Theta2: 1 neuron, 2 inputs + bias
+    #     np.array([[0.4, 0.1], [0.3, 0.2]]),      
+    #     np.array([[0.7, 0.5, 0.6]])             
     # ]
 
 

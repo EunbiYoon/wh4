@@ -81,7 +81,7 @@
         "kind": 2,
         "importPath": "debug_text",
         "description": "debug_text",
-        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME, header=\"\"): \n    with open(f\"debug/backprop_{DEBUG_FILENAME}.txt\", \"w\", encoding=\"utf-8\") as f:\n        if header:\n            f.write(\"=\" * 80 + \"\\n\")\n            f.write(header + \"\\n\")\n            f.write(\"=\" * 80 + \"\\n\")\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')\n        def println(line=\"\"):\n            f.write(line + \"\\n\")\n        println(f\"Regularization parameter lambda={lambda_reg:.3f}\\n\")",
+        "peekOfCode": "def main(lambda_reg, X, y, Theta, all_a_lists, all_z_lists, J_list, final_cost, delta_list, D_list, finalized_D, DEBUG_FILENAME, header=\"\"): \n    # Open a debug file for writing results\n    with open(f\"debug/backprop_{DEBUG_FILENAME}.txt\", \"w\", encoding=\"utf-8\") as f:\n        if header:\n            # Write optional header if provided\n            f.write(\"=\" * 80 + \"\\n\")\n            f.write(header + \"\\n\")\n            f.write(\"=\" * 80 + \"\\n\")\n        # Set NumPy printing options for consistent formatting\n        np.set_printoptions(precision=5, suppress=True, floatmode='fixed')",
         "detail": "debug_text",
         "documentation": {}
     },
